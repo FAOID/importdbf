@@ -65,23 +65,29 @@ public class ImportDbf {
 		CharField key = (CharField) dbfFile.getField("KEY");
 		for (int i = 1; i <= dbfFile.getRecordCount(); i++) {
 			dbfFile.read();
-			System.out.println(i + ":" + key.get());
+			//System.out.println(i + ":" + key.get());
 		}
 	}
 
-	@Test
-	public void testImportSpecies() throws xBaseJException, IOException {
-		
-		//clear import
-		Factory jf = taxonDao.getJooqFactory();
-		
+	protected void clearData(Factory jf)
+	{		
 		jf.delete(OFC_TAXON_VERNACULAR_NAME).execute();
 		jf.delete(OFC_TAXON).where(OFC_TAXON.PARENT_ID.isNotNull()).execute();
 		jf.delete(OFC_TAXON).execute();
 		jf.delete(OFC_TAXONOMY).execute();
-		
-
-		
+	}
+	
+	//@Test
+	public void testClearData()
+	{
+		clearData(taxonDao.getJooqFactory());
+	}
+	
+	@Test
+	public void testImportSpecies() throws xBaseJException, IOException {		
+		Factory jf = taxonDao.getJooqFactory();
+		clearData(jf);		
+				
 		//prepare taxonomy
 		Taxonomy taxonomy;		
 		taxonomy = taxonomyDao.load("mofor_species");
