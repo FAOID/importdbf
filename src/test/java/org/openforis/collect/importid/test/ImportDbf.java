@@ -9,6 +9,7 @@ import junit.framework.Assert;
 
 import org.jooq.Field;
 import org.jooq.Record;
+import org.jooq.SelectConditionStep;
 import org.jooq.impl.Factory;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -117,27 +118,46 @@ public class ImportDbf {
 
 			// family
 			famili = new Taxon();
-			taxonId = jf.nextval(OFC_TAXON_ID_SEQ).intValue();
-			famili.setTaxonId(taxonId);
-			famili.setCode("fam_" + fldNfi.get().toString());
-			famili.setScientificName(fldFamili.get());
-			famili.setTaxonomicRank("family");
-			famili.setStep(9);
-			famili.setTaxonomyId(taxonomy.getId());
-			famili.setParentId(null);
-			taxonDao.insert(famili);
+			
+			Record record = jf.select(OFC_TAXON.ID).from(OFC_TAXON).where(OFC_TAXON.SCIENTIFIC_NAME.equal(fldFamili.get().toString())).and(OFC_TAXON.TAXON_RANK.equal("family")).fetchOne();
+			if(record == null)
+			{
+				taxonId = jf.nextval(OFC_TAXON_ID_SEQ).intValue();
+				famili.setTaxonId(taxonId);
+				famili.setCode("fam_" + fldNfi.get().toString());
+				famili.setScientificName(fldFamili.get());
+				famili.setTaxonomicRank("family");
+				famili.setStep(9);
+				famili.setTaxonomyId(taxonomy.getId());
+				famili.setParentId(null);
+				taxonDao.insert(famili);
+			}else
+			{
+				taxonId = record.getValueAsInteger(OFC_TAXON.ID);
+			}
+			
+			
+			
 
 			// genus
 			genus = new Taxon();
-			taxonId = jf.nextval(OFC_TAXON_ID_SEQ).intValue();
-			genus.setTaxonId(taxonId);
-			genus.setCode("gen_" + fldNfi.get().toString());
-			genus.setScientificName(fldGenus.get().toString());
-			genus.setTaxonomicRank("genus");
-			genus.setStep(9);
-			genus.setTaxonomyId(taxonomy.getId());
-			genus.setParentId(famili.getSystemId());
-			taxonDao.insert(genus);
+			record = jf.select(OFC_TAXON.ID).from(OFC_TAXON).where(OFC_TAXON.SCIENTIFIC_NAME.equal(fldGenus.get().toString())).and(OFC_TAXON.TAXON_RANK.equal("genus")).fetchOne();
+			if(record == null)
+			{
+				taxonId = jf.nextval(OFC_TAXON_ID_SEQ).intValue();
+				genus.setTaxonId(taxonId);
+				genus.setCode("gen_" + fldNfi.get().toString());
+				genus.setScientificName(fldGenus.get().toString());
+				genus.setTaxonomicRank("genus");
+				genus.setStep(9);
+				genus.setTaxonomyId(taxonomy.getId());
+				genus.setParentId(famili.getSystemId());
+				taxonDao.insert(genus);
+			}else
+			{
+				taxonId = record.getValueAsInteger(OFC_TAXON.ID);
+			}
+			
 
 			// spesies
 			spesies = new Taxon();
