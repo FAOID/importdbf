@@ -116,10 +116,9 @@ public class ImportDbf {
 			dbfFile.read();
 			if(fldKode.get().equals(null)|| "".equals(fldKode.get())) continue;
 
-			// family
-			famili = new Taxon();
-			
-			Record record = jf.select(OFC_TAXON.ID).from(OFC_TAXON).where(OFC_TAXON.SCIENTIFIC_NAME.equal(fldFamili.get().toString())).and(OFC_TAXON.TAXON_RANK.equal("family")).fetchOne();
+			// family. removed duplication
+			famili = new Taxon();			
+			Record record = jf.select(OFC_TAXON.ID).from(OFC_TAXON).where(OFC_TAXON.SCIENTIFIC_NAME.equalIgnoreCase(fldFamili.get().toString())).and(OFC_TAXON.TAXON_RANK.equal("family")).fetchOne();
 			if(record == null)
 			{
 				taxonId = jf.nextval(OFC_TAXON_ID_SEQ).intValue();
@@ -139,9 +138,9 @@ public class ImportDbf {
 			
 			
 
-			// genus
+			// genus. Remove duplication
 			genus = new Taxon();
-			record = jf.select(OFC_TAXON.ID).from(OFC_TAXON).where(OFC_TAXON.SCIENTIFIC_NAME.equal(fldGenus.get().toString())).and(OFC_TAXON.TAXON_RANK.equal("genus")).fetchOne();
+			record = jf.select(OFC_TAXON.ID).from(OFC_TAXON).where(OFC_TAXON.SCIENTIFIC_NAME.equalIgnoreCase(fldGenus.get().toString())).and(OFC_TAXON.TAXON_RANK.equal("genus")).fetchOne();
 			if(record == null)
 			{
 				taxonId = jf.nextval(OFC_TAXON_ID_SEQ).intValue();
@@ -159,7 +158,7 @@ public class ImportDbf {
 			}
 			
 
-			// spesies
+			// spesies. Duplication allowed, because in the data, there is the same species name with different genus and family name
 			spesies = new Taxon();
 			taxonId = jf.nextval(OFC_TAXON_ID_SEQ).intValue();
 			spesies.setTaxonId(taxonId);
@@ -188,23 +187,29 @@ public class ImportDbf {
 			for (int j = 1; j <= dbfFile.getRecordCount(); j++) {
 				
 				dbfFile.read();
-				Record r = jf.select(OFC_TAXON.ID).from(OFC_TAXON).where(OFC_TAXON.CODE.equal(fldNfiVn.get().toString())).fetchOne();
-				if(r==null)
+				Record r = jf.select(OFC_TAXON.ID).from(OFC_TAXON).where(OFC_TAXON.CODE.equalIgnoreCase(fldNfiVn.get().toString())).fetchOne();
+				if(r == null) // invalid data case of a VN refer to inexisting Species
 				{
-					System.out.println(fldNamaVn.get().toString() + " is species with NFI code = " + fldNfiVn.get().toString());
+					System.out.println("V.n : " + fldNamaVn.get().toString() + " refer to unexisting Species NFI Code : " + fldNfiVn.get().toString());
 					continue;
 				}
 				taxonId = r.getValueAsInteger(OFC_TAXON.ID);				
 				TaxonVernacularName vn = new TaxonVernacularName();
-				vn.setId(jf.nextval(OFC_TAXON_VERNACULAR_NAME_ID_SEQ).intValue());
-				vn.setTaxonSystemId(taxonId);
-				vn.setVernacularName(fldNamaVn.get().toString() + dbfFile.getName());
-				vn.setStep(9);
-				vn.setLanguageCode("id");
-				//List<String> qualifier = new ArrayList<String>();
-				//qualifier.add("test");
-				//vn.setQualifiers(qualifier);
-				taxonVernacularNameDao.insert(vn);
+				
+				r = jf.select(OFC_TAXON_VERNACULAR_NAME.VERNACULAR_NAME).from(OFC_TAXON_VERNACULAR_NAME).where(OFC_TAXON_VERNACULAR_NAME.VERNACULAR_NAME.equalIgnoreCase(fldNamaVn.get().toString())).fetchOne();
+				if(r == null)
+				{
+					vn.setId(jf.nextval(OFC_TAXON_VERNACULAR_NAME_ID_SEQ).intValue());
+					vn.setTaxonSystemId(taxonId);
+					vn.setVernacularName(fldNamaVn.get().toString());
+					vn.setStep(9);
+					vn.setLanguageCode("id");
+					//We won't assign the province code here
+					//List<String> qualifier = new ArrayList<String>();
+					//qualifier.add("test");
+					//vn.setQualifiers(qualifier);
+					taxonVernacularNameDao.insert(vn);
+				}
 			}
 			
 		}
