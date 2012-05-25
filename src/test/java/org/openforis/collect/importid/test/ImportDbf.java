@@ -110,18 +110,21 @@ public class ImportDbf {
 		CharField fldSpesies = (CharField) dbfFile.getField("SPESIES");
 
 		
-		int taxonId;
+		// in this species import task, systemId is the same as taxonId
+		int taxonId, familyId, genusId;
 		Taxon famili, genus, spesies;
 		for (int i = 1; i <= dbfFile.getRecordCount(); i++) {
 			dbfFile.read();
 			if(fldKode.get().equals(null)|| "".equals(fldKode.get())) continue;
-
+			
 			// family. removed duplication
 			famili = new Taxon();			
 			Record record = jf.select(OFC_TAXON.ID).from(OFC_TAXON).where(OFC_TAXON.SCIENTIFIC_NAME.equalIgnoreCase(fldFamili.get().toString())).and(OFC_TAXON.TAXON_RANK.equal("family")).fetchOne();
 			if(record == null)
 			{
 				taxonId = jf.nextval(OFC_TAXON_ID_SEQ).intValue();
+				familyId = taxonId;				
+				famili.setSystemId(taxonId);
 				famili.setTaxonId(taxonId);
 				famili.setCode("fam_" + fldNfi.get().toString());
 				famili.setScientificName(fldFamili.get());
@@ -129,14 +132,11 @@ public class ImportDbf {
 				famili.setStep(9);
 				famili.setTaxonomyId(taxonomy.getId());
 				famili.setParentId(null);
-				taxonDao.insert(famili);
+				taxonDao.insert(famili);				
 			}else
 			{
-				taxonId = record.getValueAsInteger(OFC_TAXON.ID);
+				familyId = record.getValueAsInteger(OFC_TAXON.ID);
 			}
-			
-			
-			
 
 			// genus. Remove duplication
 			genus = new Taxon();
@@ -144,19 +144,21 @@ public class ImportDbf {
 			if(record == null)
 			{
 				taxonId = jf.nextval(OFC_TAXON_ID_SEQ).intValue();
+				genusId = taxonId;
+				genus.setSystemId(taxonId);
 				genus.setTaxonId(taxonId);
 				genus.setCode("gen_" + fldNfi.get().toString());
 				genus.setScientificName(fldGenus.get().toString());
 				genus.setTaxonomicRank("genus");
 				genus.setStep(9);
 				genus.setTaxonomyId(taxonomy.getId());
-				genus.setParentId(famili.getSystemId());
-				taxonDao.insert(genus);
+				genus.setParentId(familyId);
+				taxonDao.insert(genus);				
 			}else
 			{
-				taxonId = record.getValueAsInteger(OFC_TAXON.ID);
+				genusId = record.getValueAsInteger(OFC_TAXON.ID);
 			}
-			
+		
 
 			// spesies. Duplication allowed, because in the data, there is the same species name with different genus and family name
 			spesies = new Taxon();
@@ -167,7 +169,7 @@ public class ImportDbf {
 			spesies.setTaxonomicRank("species");
 			spesies.setStep(9);
 			spesies.setTaxonomyId(taxonomy.getId());
-			spesies.setParentId(genus.getSystemId());
+			spesies.setParentId(genusId);
 			taxonDao.insert(spesies);
 		}
 		
