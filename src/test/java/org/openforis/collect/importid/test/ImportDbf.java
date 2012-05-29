@@ -85,12 +85,12 @@ public class ImportDbf {
 	}
 	
 	@Test
-	public void testImportSpecies() throws xBaseJException, IOException {		
+	public void testImportSpecies() throws xBaseJException, IOException {
 		Factory jf = taxonDao.getJooqFactory();
 		clearData(jf);		
 				
 		//prepare taxonomy
-		Taxonomy taxonomy;		
+		Taxonomy taxonomy;
 		taxonomy = taxonomyDao.load("mofor_species");
 		if (taxonomy == null) {
 			taxonomy = new Taxonomy();
@@ -205,11 +205,10 @@ public class ImportDbf {
 					vn.setTaxonSystemId(taxonId);
 					vn.setVernacularName(fldNamaVn.get().toString());
 					vn.setStep(9);
-					vn.setLanguageCode("id");
-					//We won't assign the province code here
-					//List<String> qualifier = new ArrayList<String>();
-					//qualifier.add("test");
-					//vn.setQualifiers(qualifier);
+					vn.setLanguageCode("id");					
+					List<String> qualifier = new ArrayList<String>();
+					qualifier.add(fldTempatVn.get().toString());
+					vn.setQualifiers(qualifier);					
 					taxonVernacularNameDao.insert(vn);
 				}
 			}
