@@ -7,6 +7,7 @@ import java.util.List;
 
 import junit.framework.Assert;
 
+import org.apache.commons.lang3.text.WordUtils;
 import org.jooq.Field;
 import org.jooq.Record;
 import org.jooq.SelectConditionStep;
@@ -199,16 +200,23 @@ public class ImportDbf {
 				TaxonVernacularName vn = new TaxonVernacularName();
 				
 				r = jf.select(OFC_TAXON_VERNACULAR_NAME.VERNACULAR_NAME).from(OFC_TAXON_VERNACULAR_NAME).where(OFC_TAXON_VERNACULAR_NAME.VERNACULAR_NAME.equalIgnoreCase(fldNamaVn.get().toString())).fetchOne();
+				String provinceCode, vnName;
 				if(r == null)
 				{
 					vn.setId(jf.nextval(OFC_TAXON_VERNACULAR_NAME_ID_SEQ).intValue());
 					vn.setTaxonSystemId(taxonId);
-					vn.setVernacularName(fldNamaVn.get().toString());
+					vnName = WordUtils.capitalize(fldNamaVn.get().toString().toLowerCase());
+					vn.setVernacularName(vnName);
 					vn.setStep(9);
 					vn.setLanguageCode("id");					
 					List<String> qualifier = new ArrayList<String>();
-					qualifier.add(fldTempatVn.get().toString());
-					vn.setQualifiers(qualifier);					
+					provinceCode = fldTempatVn.get().toString().trim();
+					if(provinceCode.equals("")){
+						System.out.println("No province code for v.n " + vnName);
+					} else {
+						qualifier.add(""+Integer.parseInt(provinceCode));//remove left padding zero, e.g 06
+						vn.setQualifiers(qualifier);
+					}										
 					taxonVernacularNameDao.insert(vn);
 				}
 			}
