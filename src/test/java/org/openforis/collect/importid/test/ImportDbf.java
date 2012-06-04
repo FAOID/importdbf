@@ -79,13 +79,13 @@ public class ImportDbf {
 		jf.delete(OFC_TAXONOMY).execute();
 	}
 	
-	//@Test
+	@Test
 	public void testClearData()
 	{
 		clearData(taxonDao.getJooqFactory());
 	}
 	
-	@Test
+	//@Test
 	public void testImportSpecies() throws xBaseJException, IOException {
 		Factory jf = taxonDao.getJooqFactory();
 		clearData(jf);		
