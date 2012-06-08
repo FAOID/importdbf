@@ -58,6 +58,10 @@
 		<property name="dataSource" ref="dataSource"/>
 	</bean>
 	
+	<bean id="factoryDao" class="org.openforis.collect.importid.test.FactoryDao">
+		<property name="dataSource" ref="dataSource"/>
+	</bean>
+	
 	<!--  Managers -->
 	<bean id="recordManager" 					class="org.openforis.collect.manager.RecordManager" init-method="init" />	
 	<bean id="surveyManager"	 				class="org.openforis.collect.manager.SurveyManager" init-method="init" />
