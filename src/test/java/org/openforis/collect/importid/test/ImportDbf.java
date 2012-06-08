@@ -38,6 +38,10 @@ import static org.openforis.collect.persistence.jooq.Sequences.OFC_TAXON_VERNACU
 
 /*
  * @author Wibowo, Eko
+ * NOTE : this small utility is designed to import DBFs of Indonesia Mofor species into Collect. 
+ * It just use getJooqFactory from taxonDao, which must not be like that
+ * But to implement a temporal function like this inside a taxonManager, will add a useless complexity
+ * So, I just let there is compilation error here. To fix it, just change visibility of getJooqFactory into public
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "/ImportDbf-context.xml" })
@@ -79,13 +83,13 @@ public class ImportDbf {
 		jf.delete(OFC_TAXONOMY).execute();
 	}
 	
-	@Test
+	//@Test
 	public void testClearData()
 	{
 		clearData(taxonDao.getJooqFactory());
 	}
 	
-	//@Test
+	@Test
 	public void testImportSpecies() throws xBaseJException, IOException {
 		Factory jf = taxonDao.getJooqFactory();
 		clearData(jf);		
