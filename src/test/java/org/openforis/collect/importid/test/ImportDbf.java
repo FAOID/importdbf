@@ -124,7 +124,10 @@ public class ImportDbf {
 					try {
 						String dbfName= f2.getPath() + "\\" + dbf;
 						System.out.println("\t\tProcessing " + dbfName);
-						
+						if(dbf.equals("RT1.DBF"))
+						{
+							
+						}
 						dbfFile = new DBF(dbfName);
 					} catch (xBaseJException e) {
 						e.printStackTrace();
