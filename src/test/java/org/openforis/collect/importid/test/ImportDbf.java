@@ -92,6 +92,11 @@ public class ImportDbf {
 		 * KEY is 4717003009302060 47 = zone 170 = easting 0300 = northing 93 =
 		 * inventory year 0 = control number 2 = track number 06 = sub plot
 		 * number 0 = small or big part
+		 * 
+		 * e.g 
+		 * 4770098301109080
+		 * 47 700 9830 1109080
+		 * 47 420 0250 1101010
 		 */
 		File[] files = dir.listFiles(fileFilter);
 		for (File f : files) { // BPKH1_Medan
@@ -124,37 +129,32 @@ public class ImportDbf {
 					try {
 						String dbfName= f2.getPath() + "\\" + dbf;
 						System.out.println("\t\tProcessing " + dbfName);
+						dbfFile = new DBF(dbfName);
 						if(dbf.equals("RT1.DBF"))
 						{
-							
-						}
-						dbfFile = new DBF(dbfName);
+							for (int i = 1; i <= dbfFile.getRecordCount(); i++) {
+								dbfFile.read();
+								CharField fldKey = (CharField) dbfFile.getField("KEY");
+								String clusterKey = fldKey.get().toString();
+								clusterKey = "4712307660319021";								
+								String utmZone = clusterKey.substring(0,2);
+								String easting = clusterKey.substring(2,5);
+								String northing = clusterKey.substring(5,9);
+								String year = clusterKey.substring(9, 11);
+								String control = clusterKey.substring(11,12);
+								String track = clusterKey.substring(12, 13);
+								String subplot = clusterKey.substring(13, 15);
+								String smallOrBig = clusterKey.substring(15, 16);								
+							}							
+						}						
 					} catch (xBaseJException e) {
 						e.printStackTrace();
 						continue;
 					}
 					
 					
-					try {
-						CharField key = (CharField) dbfFile.getField("KEY");
-					} catch (ArrayIndexOutOfBoundsException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (xBaseJException e) {
-						// TODO Auto-generated catch block
-						System.out.println(e.getMessage());
-						continue;
-						
-					}
-					for (int i = 1; i <= dbfFile.getRecordCount(); i++) {
-						try {
-							dbfFile.read();
-						} catch (xBaseJException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-						//System.out.println(i + ":" + key.get());
-					}
+					
+					
 				}
 			}
 		}
