@@ -9,6 +9,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.sql.Connection;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 
 import junit.framework.Assert;
@@ -20,9 +22,18 @@ import org.jooq.SelectConditionStep;
 import org.jooq.impl.Factory;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.openforis.collect.manager.SurveyManager;
+import org.openforis.collect.manager.UserManager;
+import org.openforis.collect.model.CollectRecord;
+import org.openforis.collect.model.User;
+import org.openforis.collect.model.CollectRecord.Step;
+import org.openforis.collect.model.CollectSurvey;
+import org.openforis.collect.persistence.RecordDao;
 import org.openforis.collect.persistence.TaxonDao;
 import org.openforis.collect.persistence.TaxonVernacularNameDao;
 import org.openforis.collect.persistence.TaxonomyDao;
+import org.openforis.idm.model.Entity;
+import org.openforis.idm.model.IntegerValue;
 import org.openforis.idm.model.species.Taxon;
 import org.openforis.idm.model.species.TaxonVernacularName;
 import org.openforis.idm.model.species.Taxonomy;
@@ -64,6 +75,15 @@ public class ImportDbf {
 
 	@Autowired
 	private FactoryDao factoryDao;
+	
+	@Autowired
+	private SurveyManager surveyManager;
+	
+	@Autowired
+	private RecordDao recordDao;
+	
+	@Autowired
+	private UserManager userManager;
 
 	@Test
 	public void testImportCluster() throws IOException,
@@ -98,6 +118,8 @@ public class ImportDbf {
 		 * 47 700 9830 1109080
 		 * 47 420 0250 1101010
 		 */
+		
+		User user = userManager.loadByUserName("eko");
 		File[] files = dir.listFiles(fileFilter);
 		for (File f : files) { // BPKH1_Medan
 			System.out.println("Processing folder " + f.getPath());
@@ -135,16 +157,36 @@ public class ImportDbf {
 							for (int i = 1; i <= dbfFile.getRecordCount(); i++) {
 								dbfFile.read();
 								CharField fldKey = (CharField) dbfFile.getField("KEY");
-								String clusterKey = fldKey.get().toString();
-								clusterKey = "4712307660319021";								
+								String clusterKey = fldKey.get().toString();					
 								String utmZone = clusterKey.substring(0,2);
 								String easting = clusterKey.substring(2,5);
 								String northing = clusterKey.substring(5,9);
-								String year = clusterKey.substring(9, 11);
+								String year = generateYear(clusterKey.substring(9, 11));
 								String control = clusterKey.substring(11,12);
 								String track = clusterKey.substring(12, 13);
 								String subplot = clusterKey.substring(13, 15);
-								String smallOrBig = clusterKey.substring(15, 16);								
+								String smallOrBig = clusterKey.substring(15, 16);
+								
+								System.out.println("\t\t\t" + clusterKey + " : " + utmZone + " " + easting + " " + northing + " "  + year + " " + control + " " + track + " " + subplot + " " +smallOrBig);
+								CollectSurvey survey = surveyManager.get("idnfi");
+								CollectRecord record = new CollectRecord(survey, "1.0");
+								
+								Entity cluster = record.createRootEntity("cluster");
+								Entity plota = cluster.addEntity("permanent_plot_a");
+								record.setCreationDate(new Date());
+								record.setStep(Step.ENTRY);
+								ArrayList<String> keys = new ArrayList<String>();
+								keys.add(utmZone);
+								keys.add(easting);
+								keys.add(northing);
+								record.setCreatedBy(user);
+								record.setModifiedBy(user);
+								record.setModifiedDate(new Date());
+								record.setRootEntityKeyValues(keys);
+								plota.addValue("year", Integer.parseInt(year));
+								
+								recordDao.insert(record);
+								
 							}							
 						}						
 					} catch (xBaseJException e) {
@@ -159,6 +201,15 @@ public class ImportDbf {
 			}
 		}
 
+	}
+
+	private String generateYear(String twoDigitYear) {
+		int year = Integer.parseInt(twoDigitYear);
+		if(year<11){
+			return "20" + twoDigitYear;
+		}else{
+			return "19" + twoDigitYear;
+		}
 	}
 
 	protected void clearData(Factory jf) {
