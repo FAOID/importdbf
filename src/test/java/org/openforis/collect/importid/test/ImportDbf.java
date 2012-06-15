@@ -32,6 +32,8 @@ import org.openforis.collect.persistence.RecordDao;
 import org.openforis.collect.persistence.TaxonDao;
 import org.openforis.collect.persistence.TaxonVernacularNameDao;
 import org.openforis.collect.persistence.TaxonomyDao;
+import org.openforis.collect.persistence.jooq.DialectAwareJooqFactory;
+import org.openforis.idm.model.Code;
 import org.openforis.idm.model.Entity;
 import org.openforis.idm.model.IntegerValue;
 import org.openforis.idm.model.species.Taxon;
@@ -49,6 +51,7 @@ import org.xBaseJ.fields.NumField;
 import static org.openforis.collect.persistence.jooq.tables.OfcTaxon.OFC_TAXON;
 import static org.openforis.collect.persistence.jooq.tables.OfcTaxonVernacularName.OFC_TAXON_VERNACULAR_NAME;
 import static org.openforis.collect.persistence.jooq.tables.OfcTaxonomy.OFC_TAXONOMY;
+import static org.openforis.collect.persistence.jooq.tables.OfcRecord.OFC_RECORD;
 
 import static org.openforis.collect.persistence.jooq.Sequences.OFC_TAXON_ID_SEQ;
 import static org.openforis.collect.persistence.jooq.Sequences.OFC_TAXON_VERNACULAR_NAME_ID_SEQ;
@@ -119,6 +122,11 @@ public class ImportDbf {
 		 * 47 420 0250 1101010
 		 */
 		
+		//clear me! ^_^
+		DialectAwareJooqFactory jf = factoryDao.getJooqFactory();
+		jf.delete(OFC_RECORD).where(OFC_RECORD.CREATED_BY_ID.equal(1)).execute();
+		
+		
 		User user = userManager.loadByUserName("eko");
 		File[] files = dir.listFiles(fileFilter);
 		for (File f : files) { // BPKH1_Medan
@@ -163,16 +171,33 @@ public class ImportDbf {
 								String northing = clusterKey.substring(5,9);
 								String year = generateYear(clusterKey.substring(9, 11));
 								String control = clusterKey.substring(11,12);
-								String track = clusterKey.substring(12, 13);
+								String tract = clusterKey.substring(12, 13);
 								String subplot = clusterKey.substring(13, 15);
 								String smallOrBig = clusterKey.substring(15, 16);
 								
-								System.out.println("\t\t\t" + clusterKey + " : " + utmZone + " " + easting + " " + northing + " "  + year + " " + control + " " + track + " " + subplot + " " +smallOrBig);
+								System.out.println("\t\t\t" + clusterKey + " : " + utmZone + " " + easting + " " + northing + " "  + year + " " + control + " " + tract + " " + subplot + " " +smallOrBig);
 								CollectSurvey survey = surveyManager.get("idnfi");
-								CollectRecord record = new CollectRecord(survey, "1.0");
+								CollectRecord record;								
+								Entity cluster;
 								
-								Entity cluster = record.createRootEntity("cluster");
-								Entity plota = cluster.addEntity("permanent_plot_a");
+								List<CollectRecord> recordList = recordDao.loadSummaries(survey, "cluster", utmZone,easting,northing);
+								if(recordList.size()==0)
+								{
+									System.out.println("New cluster, creating");
+									record = new CollectRecord(survey, "1.0");
+									cluster = record.createRootEntity("cluster");
+									cluster.addValue("utm_zone", Integer.parseInt(utmZone));
+									cluster.addValue("easting", Integer.parseInt(easting));
+									cluster.addValue("northing", Integer.parseInt(northing));
+									cluster.addValue("year", Integer.parseInt(year));//this is new one, added by me, not in the tally sheet
+								}else{
+									record = recordDao.load(survey, recordList.get(0).getId(), 1);									
+									cluster = record.getRootEntity();
+									Assert.assertNotNull(cluster);
+								}
+								
+								
+								Entity nf = cluster.addEntity("natural_forest");
 								record.setCreationDate(new Date());
 								record.setStep(Step.ENTRY);
 								ArrayList<String> keys = new ArrayList<String>();
@@ -183,10 +208,42 @@ public class ImportDbf {
 								record.setModifiedBy(user);
 								record.setModifiedDate(new Date());
 								record.setRootEntityKeyValues(keys);
-								plota.addValue("year", Integer.parseInt(year));
 								
-								recordDao.insert(record);
+								//keys
+								nf.addValue("tract_no", Integer.parseInt(tract));
+								nf.addValue("subplot_no", Integer.parseInt(subplot));
 								
+								//do this by the contents of the old foxpro fields
+								nf.addValue("sector", getDouble(dbfFile,"SECTOR"));
+								nf.addValue("segment_dist", getDouble(dbfFile,"DISTANCE"));
+								//?Square
+								addCode(nf,"province",dbfFile,"PROVINCE");
+								addCode(nf,"land_system",dbfFile,"LANDSYS");
+								addCode(nf,"altitude",dbfFile,"ALT");
+								addCode(nf,"land_category",dbfFile,"LANDUSE");
+								addCode(nf,"forest_type",dbfFile,"FORTYPE");
+								addCode(nf,"stand_condition",dbfFile,"STAND");
+								addInt(nf,"logging_year", dbfFile, "YRLOG");
+								addCode(nf,"terrain",dbfFile,"TERRAIN");
+								addCode(nf,"slope",dbfFile,"SLOPE");
+								addCode(nf,"aspect",dbfFile,"ASPECT");
+								
+								Entity recordCount = nf.addEntity("record_count");
+								addInt(recordCount, "trees_poles",dbfFile, "NOTREES");
+								addInt(recordCount,"seedlings", dbfFile, "NOSEED");
+								addInt(recordCount,"saplings", dbfFile, "NOSAP");
+								addInt(recordCount,"sm_rattan", dbfFile, "NORAT1");
+								addInt(recordCount,"lg_rattan", dbfFile, "NORAT2");
+								
+								addInt(nf, "crew_no", dbfFile, "CREWNO");
+								addCode(nf,"month",dbfFile, "MONTHIN");
+								nf.addValue("year", Integer.parseInt(year));
+								
+								if(record.getId() == null ) {
+									recordDao.insert(record);
+								} else {
+									recordDao.update(record);
+								}								
 							}							
 						}						
 					} catch (xBaseJException e) {
@@ -203,12 +260,32 @@ public class ImportDbf {
 
 	}
 
+	private void addInt(Entity entity, String collectField, DBF dbfFile, String dbField) throws NumberFormatException, ArrayIndexOutOfBoundsException, xBaseJException {
+		String strValue = ((NumField) dbfFile.getField(dbField)).get().trim();
+		if(!"".equals(strValue))
+		{
+			entity.addValue(collectField, Integer.parseInt(strValue));
+		}
+	}
+
+	private void addCode (Entity entity, String collectField, DBF dbfFile, String dbField) throws ArrayIndexOutOfBoundsException, xBaseJException {
+		String strValue = ((NumField) dbfFile.getField(dbField)).get().trim();
+		if(!"".equals(strValue))
+		{
+			entity.addValue(collectField, new Code(strValue));
+		}
+	}
+
+	private double getDouble(DBF dbfFile, String field) throws xBaseJException {
+		return Double.parseDouble((((NumField) dbfFile.getField(field)).get().trim()));
+	}
+
 	private String generateYear(String twoDigitYear) {
 		int year = Integer.parseInt(twoDigitYear);
 		if(year<11){
-			return "20" + twoDigitYear;
+			return "19" + twoDigitYear;//
 		}else{
-			return "19" + twoDigitYear;
+			return "20" + twoDigitYear;//11
 		}
 	}
 
