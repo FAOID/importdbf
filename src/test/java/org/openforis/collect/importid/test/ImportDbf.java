@@ -35,7 +35,9 @@ import org.openforis.collect.persistence.TaxonomyDao;
 import org.openforis.collect.persistence.jooq.DialectAwareJooqFactory;
 import org.openforis.idm.model.Code;
 import org.openforis.idm.model.Entity;
+import org.openforis.idm.model.IntegerAttribute;
 import org.openforis.idm.model.IntegerValue;
+import org.openforis.idm.model.RealAttribute;
 import org.openforis.idm.model.species.Taxon;
 import org.openforis.idm.model.species.TaxonVernacularName;
 import org.openforis.idm.model.species.Taxonomy;
@@ -236,7 +238,7 @@ public class ImportDbf {
 					
 					Entity lg_trees = tp.addEntity("lg_trees");
 					//di IDM ada tree_height, tapi disiniga ada. 
-					addDouble(lg_trees,"buttress_height", dbf2, "BUTHGT");
+					addDouble(lg_trees,"buttress_height", dbf2, "BUTHGT"); //TODO : adding blank value?
 					addDouble(lg_trees, "bole_height", dbf2, "BOLHGT");
 					addInt(lg_trees,"grade",dbf2, "GRADE"); // it should be code
 					addInt(lg_trees, "infestation", dbf2, "INFEST");
@@ -257,6 +259,30 @@ public class ImportDbf {
 				}
 			}
 			
+			DBF dbf3 = new DBF(folderPath.getPath() + "\\" + "RT4.DBF");
+			for(int k=1;k<=dbf3.getRecordCount();k++)
+			{
+				dbf3.read();
+				CharField fldCurrentKey = (CharField) dbf3.getField("KEY");
+				String currentKey = fldCurrentKey.get();
+				if(currentKey.equals(clusterKey))
+				{
+					Entity ssr = nf.addEntity("ssr");
+					addText(ssr, "species_name", dbf3, "LOKAL");
+					//ada count disini, tapi di foxpro g d. Di tally sheet ada
+					addInt(ssr, "seedlings",dbf3, "SEEDNO");
+					addInt(ssr, "saplings", dbf3, "SAPNO");
+					addInt(ssr, "sm_rattan", dbf3, "RAT1NO");
+					
+					Entity lg_rattan = ssr.addEntity("lg_rattan");
+					addInt(lg_rattan, "stems", dbf3, "RAT2NO");
+					addDouble(lg_rattan, "max_diameter", dbf3, "RAT2DMX");
+					addDouble(lg_rattan, "min_diameter", dbf3, "RAT2DMN");
+					addDouble(lg_rattan, "avg_diameter", dbf3, "RAT2DAV");
+					addDouble(lg_rattan, "avg_length", dbf3, "RAT2L");					
+				}
+			}
+			
 			
 			if(record.getId() == null ) {
 				recordDao.insert(record);
@@ -269,11 +295,22 @@ public class ImportDbf {
 
 	private void addDouble(Entity entity, String collectField, DBF dbfFile, String dbField) throws ArrayIndexOutOfBoundsException, xBaseJException {
 		String strValue = ((NumField) dbfFile.getField(dbField)).get().trim();
-		if(!"".equals(strValue))
+		if("0".equals(strValue))
+		{
+			RealAttribute attr = entity.addValue(collectField, Double.parseDouble("0"));
+			//attr.getField(0).setSymbol('*');
+			//attr.getField(0).setRemarks("Zero value specified");
+			
+		} else if("".equals(strValue))
+		{	
+			RealAttribute attr = entity.addValue(collectField, (Double) null);
+			attr.getField(0).setSymbol('*');
+			attr.getField(0).setRemarks("Empty value specified");
+		}
+		else if(!"".equals(strValue))
 		{
 			entity.addValue(collectField, Double.parseDouble(strValue));
 		}
-		
 	}
 
 
@@ -287,7 +324,19 @@ public class ImportDbf {
 
 	private void addInt(Entity entity, String collectField, DBF dbfFile, String dbField) throws NumberFormatException, ArrayIndexOutOfBoundsException, xBaseJException {
 		String strValue = ((NumField) dbfFile.getField(dbField)).get().trim();
-		if(!"".equals(strValue))
+		if("0".equals(strValue))
+		{
+			IntegerAttribute attr = entity.addValue(collectField, Integer.parseInt("0"));
+			//attr.getField(0).setSymbol('*');
+			//attr.getField(0).setRemarks("Zero value specified");
+			
+		} else if("".equals(strValue))
+		{	
+			IntegerAttribute attr = entity.addValue(collectField, (Integer) null);
+			attr.getField(0).setSymbol('*');
+			attr.getField(0).setRemarks("Empty value specified");
+		}
+		else if(!"".equals(strValue))
 		{
 			entity.addValue(collectField, Integer.parseInt(strValue));
 		}
