@@ -11,6 +11,7 @@ import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.List;
 
 import junit.framework.Assert;
@@ -127,7 +128,8 @@ public class ImportDbf {
 			{
 				System.out.println("\tProcessing folder " + f2.getPath());
 				try {
-					processNaturalForest(f2, user);
+					//processNaturalForest(f2, user);
+					processPermanentPlotA(f2, user);
 				} catch (xBaseJException e) {
 					e.printStackTrace();
 					continue;
@@ -138,88 +140,125 @@ public class ImportDbf {
 	}
 
 	
+	
+
+	private void processPermanentPlotA(File folderPath, User user) throws xBaseJException, IOException {
+		System.out.println("\t\tPermanent Plot A ==========");
+		DBF dbf1 = new DBF(folderPath.getPath() + "\\" + "RT5(45).DBF");		
+		for (int i = 1; i <= dbf1.getRecordCount(); i++) {
+			dbf1.read();
+			
+			HashMap<String, Object> result = prepareCluster(dbf1, user);
+			Entity cluster = (Entity) result.get("cluster");
+			String hectarePlot = (String) result.get("tract");//for plat A, tract is hectare plot
+			String recordUnit = (String) result.get("subplot");//record unit
+			String control = (String) result.get("control");
+			String year = (String) result.get("year");
+			String clusterKey = (String) result.get("clusterKey");
+			String smallOrBig = (String) result.get("smallOrBig");
+			
+			CollectRecord record = (CollectRecord) result.get("record");
+			
+			Entity permanent_plot_a = cluster.addEntity("permanent_plot_a");
+			
+			addDouble(permanent_plot_a, "sector", dbf1, "SECTOR");
+			addDouble(permanent_plot_a, "segment_dist", dbf1, "DISTANCE");
+			
+			//keys for permanent plot a
+			permanent_plot_a.addValue("control", Integer.parseInt(control));
+			permanent_plot_a.addValue("hectare_plot", Double.parseDouble(hectarePlot));//TOFIX : this should be integer! And the IDM should be updated too!
+			permanent_plot_a.addValue("record_unit", Integer.parseInt(recordUnit));
+			if("0".equals(smallOrBig) || "1".equals(smallOrBig)) {
+				permanent_plot_a.addValue("largepart", Integer.parseInt(smallOrBig)); //large part
+			} else {
+				permanent_plot_a.addValue("part", Integer.parseInt(smallOrBig));
+			}
+			
+			addDouble(permanent_plot_a, "square_5x3", dbf1,"SQUARES");
+			addCode(permanent_plot_a,"province",dbf1,"PROVINCE");
+			addCode(permanent_plot_a,"land_system",dbf1,"LANDSYS");
+			addCode(permanent_plot_a,"altitude",dbf1,"ALT");
+			addCode(permanent_plot_a,"land_category",dbf1,"LANDUSE");
+			addCode(permanent_plot_a,"forest_type",dbf1,"FORTYPE");
+			addCode(permanent_plot_a,"stand_condition",dbf1,"STAND");
+			addInt(permanent_plot_a,"logging_year", dbf1, "YRLOG");
+			addCode(permanent_plot_a,"terrain",dbf1,"TERRAIN");
+			addCode(permanent_plot_a,"slope",dbf1,"SLOPE");
+			addCode(permanent_plot_a,"aspect",dbf1,"ASPECT");
+			addInt(permanent_plot_a, "tp_recorded", dbf1, "NOTREES");
+			addInt(permanent_plot_a, "crew_no", dbf1, "CREWNO");
+			addCode(permanent_plot_a,"month",dbf1, "MONTHIN");
+			permanent_plot_a.addValue("year", Integer.parseInt(year));
+			
+			if(record.getId() == null ) {
+				recordDao.insert(record);
+			} else {
+				recordDao.update(record);
+			}
+		}
+		
+		
+	}
+
+
+
 
 	private void processNaturalForest(File folderPath, User user) throws xBaseJException, IOException {		
-		System.out.println("========== NATURAL FOREST ==========");
-		DBF dbfNf = new DBF(folderPath.getPath() + "\\" + "RT1.DBF");		
-		for (int i = 1; i <= dbfNf.getRecordCount(); i++) {
-			dbfNf.read();
-			CharField fldKey = (CharField) dbfNf.getField("KEY");
-			String clusterKey = fldKey.get().toString();					
-			String utmZone = clusterKey.substring(0,2);
-			String easting = clusterKey.substring(2,5);
-			String northing = clusterKey.substring(5,9);
-			String year = generateYear(clusterKey.substring(9, 11));
-			String control = clusterKey.substring(11,12);
-			String tract = clusterKey.substring(12, 13);
-			String subplot = clusterKey.substring(13, 15);
-			String smallOrBig = clusterKey.substring(15, 16);
+		System.out.println("\t\tNATURAL FOREST ==========");
+		DBF dbf1 = new DBF(folderPath.getPath() + "\\" + "RT1.DBF");		
+		for (int i = 1; i <= dbf1.getRecordCount(); i++) {
+			dbf1.read();
 			
-			CollectSurvey survey = surveyManager.get("idnfi");
-			CollectRecord record;								
-			Entity cluster;
+			HashMap<String, Object> result = prepareCluster(dbf1, user);
+			Entity cluster = (Entity) result.get("cluster");
+			String tract = (String) result.get("tract");
+			String subplot = (String) result.get("subplot");
+			String control = (String) result.get("control");
+			String year = (String) result.get("year");
+			String clusterKey = (String) result.get("clusterKey");
+			CollectRecord record = (CollectRecord) result.get("record");
+			String smallOrBig = (String) result.get("smallOrBig");
 			
-			List<CollectRecord> recordList = recordDao.loadSummaries(survey, "cluster", utmZone,easting,northing);
-			if(recordList.size()==0)
-			{
-				System.out.println("\tNew cluster, creating : " + clusterKey + " : " + utmZone + " " + easting + " " + northing + " "  + year + " " + control + " " + tract + " " + subplot + " " +smallOrBig);
-				record = new CollectRecord(survey, "1.0");
-				cluster = record.createRootEntity("cluster");
-				cluster.addValue("utm_zone", Integer.parseInt(utmZone));
-				cluster.addValue("easting", Integer.parseInt(easting));
-				cluster.addValue("northing", Integer.parseInt(northing));
-				cluster.addValue("year", Integer.parseInt(year));//this is new one, added by me, not in the tally sheet
-			}else{
-				//System.out.println("Existing cluster, loading : " + clusterKey + " : " + utmZone + " " + easting + " " + northing + " "  + year + " " + control + " " + tract + " " + subplot + " " +smallOrBig);
-				record = recordDao.load(survey, recordList.get(0).getId(), 1);									
-				cluster = record.getRootEntity();
-				Assert.assertNotNull(cluster);
-			}
 			
 			
 			Entity nf = cluster.addEntity("natural_forest");
-			record.setCreationDate(new Date());
-			record.setStep(Step.ENTRY);
-			ArrayList<String> keys = new ArrayList<String>();
-			keys.add(utmZone);
-			keys.add(easting);
-			keys.add(northing);
-			record.setCreatedBy(user);
-			record.setModifiedBy(user);
-			record.setModifiedDate(new Date());
-			record.setRootEntityKeyValues(keys);
-			
 			//keys : what else should be included in keys?
 			nf.addValue("tract_no", Integer.parseInt(tract));
 			nf.addValue("subplot_no", Integer.parseInt(subplot));
 			
+			if("0".equals(smallOrBig) || "1".equals(smallOrBig)) {
+				nf.addValue("part", Integer.parseInt(smallOrBig)); //large part 
+			} else {
+				nf.addValue("smallpart", Integer.parseInt(smallOrBig));//small part
+			}
+			
 			//do this by the contents of the old foxpro fields
-			nf.addValue("sector", getDouble(dbfNf,"SECTOR"));
-			nf.addValue("segment_dist", getDouble(dbfNf,"DISTANCE"));
+			nf.addValue("sector", getDouble(dbf1,"SECTOR"));
+			nf.addValue("segment_dist", getDouble(dbf1,"DISTANCE"));
 			
 			nf.addValue("control", Integer.parseInt(control));
 			
 			//?Square
-			addCode(nf,"province",dbfNf,"PROVINCE");
-			addCode(nf,"land_system",dbfNf,"LANDSYS");
-			addCode(nf,"altitude",dbfNf,"ALT");
-			addCode(nf,"land_category",dbfNf,"LANDUSE");
-			addCode(nf,"forest_type",dbfNf,"FORTYPE");
-			addCode(nf,"stand_condition",dbfNf,"STAND");
-			addInt(nf,"logging_year", dbfNf, "YRLOG");
-			addCode(nf,"terrain",dbfNf,"TERRAIN");
-			addCode(nf,"slope",dbfNf,"SLOPE");
-			addCode(nf,"aspect",dbfNf,"ASPECT");
+			addCode(nf,"province",dbf1,"PROVINCE");
+			addCode(nf,"land_system",dbf1,"LANDSYS");
+			addCode(nf,"altitude",dbf1,"ALT");
+			addCode(nf,"land_category",dbf1,"LANDUSE");
+			addCode(nf,"forest_type",dbf1,"FORTYPE");
+			addCode(nf,"stand_condition",dbf1,"STAND");
+			addInt(nf,"logging_year", dbf1, "YRLOG");
+			addCode(nf,"terrain",dbf1,"TERRAIN");
+			addCode(nf,"slope",dbf1,"SLOPE");
+			addCode(nf,"aspect",dbf1,"ASPECT");
 			
 			Entity recordCount = nf.addEntity("record_count");
-			addInt(recordCount, "trees_poles",dbfNf, "NOTREES");
-			addInt(recordCount,"seedlings", dbfNf, "NOSEED");
-			addInt(recordCount,"saplings", dbfNf, "NOSAP");
-			addInt(recordCount,"sm_rattan", dbfNf, "NORAT1");
-			addInt(recordCount,"lg_rattan", dbfNf, "NORAT2");
+			addInt(recordCount, "trees_poles",dbf1, "NOTREES");
+			addInt(recordCount,"seedlings", dbf1, "NOSEED");
+			addInt(recordCount,"saplings", dbf1, "NOSAP");
+			addInt(recordCount,"sm_rattan", dbf1, "NORAT1");
+			addInt(recordCount,"lg_rattan", dbf1, "NORAT2");
 			
-			addInt(nf, "crew_no", dbfNf, "CREWNO");
-			addCode(nf,"month",dbfNf, "MONTHIN");
+			addInt(nf, "crew_no", dbf1, "CREWNO");
+			addCode(nf,"month",dbf1, "MONTHIN");
 			nf.addValue("year", Integer.parseInt(year));
 			
 			
@@ -293,6 +332,64 @@ public class ImportDbf {
 		
 	}
 
+	private HashMap<String, Object> prepareCluster(DBF dbf1, User user) throws ArrayIndexOutOfBoundsException, xBaseJException
+	{
+		HashMap<String, Object> result = new HashMap<String, Object>(); 
+		CollectRecord record;
+		CharField fldKey = (CharField) dbf1.getField("KEY");
+		String clusterKey = fldKey.get().toString();					
+		String utmZone = clusterKey.substring(0,2);
+		String easting = clusterKey.substring(2,5);
+		String northing = clusterKey.substring(5,9);
+		String year = generateYear(clusterKey.substring(9, 11));
+		String control = clusterKey.substring(11,12);
+		String tract = clusterKey.substring(12, 13);
+		String subplot = clusterKey.substring(13, 15);
+		String smallOrBig = clusterKey.substring(15, 16);
+		
+		CollectSurvey survey = surveyManager.get("idnfi");										
+		Entity cluster;
+		
+		List<CollectRecord> recordList = recordDao.loadSummaries(survey, "cluster", utmZone,easting,northing);
+		if(recordList.size()==0)
+		{
+			System.out.println("\tNew cluster, creating : " + clusterKey + " : " + utmZone + " " + easting + " " + northing + " "  + year + " " + control + " " + tract + " " + subplot + " " +smallOrBig);
+			record = new CollectRecord(survey, "1.0");
+			cluster = record.createRootEntity("cluster");
+			cluster.addValue("utm_zone", Integer.parseInt(utmZone));
+			cluster.addValue("easting", Integer.parseInt(easting));
+			cluster.addValue("northing", Integer.parseInt(northing));
+			cluster.addValue("year", Integer.parseInt(year));//this is new one, added by me, not in the tally sheet
+		}else{
+			//System.out.println("Existing cluster, loading : " + clusterKey + " : " + utmZone + " " + easting + " " + northing + " "  + year + " " + control + " " + tract + " " + subplot + " " +smallOrBig);
+			record = recordDao.load(survey, recordList.get(0).getId(), 1);									
+			cluster = record.getRootEntity();
+			Assert.assertNotNull(cluster);
+		}
+		
+		record.setCreationDate(new Date());
+		record.setStep(Step.ENTRY);
+		ArrayList<String> keys = new ArrayList<String>();
+		keys.add(utmZone);
+		keys.add(easting);
+		keys.add(northing);
+		record.setCreatedBy(user);
+		record.setModifiedBy(user);
+		record.setModifiedDate(new Date());
+		record.setRootEntityKeyValues(keys);
+		
+		result.put("cluster", cluster);
+		result.put("tract", tract);
+		result.put("subplot", subplot);
+		result.put("control", control);
+		result.put("year", year);
+		result.put("clusterKey", clusterKey);
+		result.put("record", record);
+		result.put("smallOrBig", smallOrBig);
+		
+		return result; 
+	}
+	
 	private void addDouble(Entity entity, String collectField, DBF dbfFile, String dbField) throws ArrayIndexOutOfBoundsException, xBaseJException {
 		String strValue = ((NumField) dbfFile.getField(dbField)).get().trim();
 		if("0".equals(strValue))
