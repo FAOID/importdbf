@@ -160,7 +160,7 @@ public class ImportDbf {
 			List<CollectRecord> recordList = recordDao.loadSummaries(survey, "cluster", utmZone,easting,northing);
 			if(recordList.size()==0)
 			{
-				System.out.println("New cluster, creating : " + clusterKey + " : " + utmZone + " " + easting + " " + northing + " "  + year + " " + control + " " + tract + " " + subplot + " " +smallOrBig);
+				System.out.println("\tNew cluster, creating : " + clusterKey + " : " + utmZone + " " + easting + " " + northing + " "  + year + " " + control + " " + tract + " " + subplot + " " +smallOrBig);
 				record = new CollectRecord(survey, "1.0");
 				cluster = record.createRootEntity("cluster");
 				cluster.addValue("utm_zone", Integer.parseInt(utmZone));
@@ -227,15 +227,34 @@ public class ImportDbf {
 				dbf2.read();
 				CharField fldCurrentKey = (CharField) dbf2.getField("KEY");
 				String currentKey = fldCurrentKey.get();
-				CharField fldLokal = null;
 				if(currentKey.equals(clusterKey))
 				{
-					NumField fldDbh = (NumField) dbf2.getField("DBH");
-					fldLokal = (CharField) dbf2.getField("LOKAL");
 					Entity tp = nf.addEntity("tp");
-					tp.addValue("species_name", fldLokal.get());
+					addText(tp, "species_name", dbf2, "LOKAL");
+					addDouble(tp, "diameter", dbf2, "DBH");
+					addInt(tp, "damage", dbf2, "DAMAGE");
+					
+					Entity lg_trees = tp.addEntity("lg_trees");
+					//di IDM ada tree_height, tapi disiniga ada. 
+					addDouble(lg_trees,"buttress_height", dbf2, "BUTHGT");
+					addDouble(lg_trees, "bole_height", dbf2, "BOLHGT");
+					addInt(lg_trees,"grade",dbf2, "GRADE"); // it should be code
+					addInt(lg_trees, "infestation", dbf2, "INFEST");
+					
+					Entity bole_height = tp.addEntity("bole_height");
+					addDouble(bole_height,"horizontal_distance", dbf2, "DIST1");
+					addDouble(bole_height,"base_height", dbf2, "BASE1");
+					addDouble(bole_height, "percent_base", dbf2, "PERBASE1");
+					addDouble(bole_height, "percent_crown_point", dbf2, "PERCP");
+					
+					Entity buttress = tp.addEntity("buttress");
+					addDouble(buttress, "horizontal_distance", dbf2, "DIST2");
+					addDouble(buttress, "percent_base", dbf2, "PERBASE2");
+					addDouble(buttress, "percent_buttress", dbf2, "PERCBUT");
+					Entity dab = tp.addEntity("dab");
+					addDouble(dab, "full_bars", dbf2, "FB1");
+					addDouble(dab, "quarter_bars", dbf2, "B41");
 				}
-				
 			}
 			
 			
@@ -247,6 +266,24 @@ public class ImportDbf {
 		}	
 		
 	}
+
+	private void addDouble(Entity entity, String collectField, DBF dbfFile, String dbField) throws ArrayIndexOutOfBoundsException, xBaseJException {
+		String strValue = ((NumField) dbfFile.getField(dbField)).get().trim();
+		if(!"".equals(strValue))
+		{
+			entity.addValue(collectField, Double.parseDouble(strValue));
+		}
+		
+	}
+
+
+
+	private void addText(Entity entity, String collectField, DBF dbfFile, String dbField) throws ArrayIndexOutOfBoundsException, xBaseJException {
+		String strValue = ((CharField) dbfFile.getField(dbField)).get().trim();
+		entity.addValue(collectField, strValue);
+	}
+
+
 
 	private void addInt(Entity entity, String collectField, DBF dbfFile, String dbField) throws NumberFormatException, ArrayIndexOutOfBoundsException, xBaseJException {
 		String strValue = ((NumField) dbfFile.getField(dbField)).get().trim();
