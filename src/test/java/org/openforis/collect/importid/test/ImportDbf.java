@@ -190,6 +190,58 @@ public class ImportDbf {
 			addCode(permanent_plot_a,"month",dbf1, "MONTHIN");
 			permanent_plot_a.addValue("year", Integer.parseInt(year));
 			
+			DBF dbf2 = new DBF(folderPath.getPath() + "\\" + "RT6(46).DBF");
+			for(int j = 1; j <= dbf2.getRecordCount();j++)
+			{					
+				dbf2.read();
+				CharField fldCurrentKey = (CharField) dbf2.getField("KEY");
+				String currentKey = fldCurrentKey.get();
+				if(currentKey.equals(clusterKey))
+				{
+					Entity plota_enum = permanent_plot_a.addEntity("plota_enum");
+					addText(plota_enum, "name_of_species", dbf2, "LOKAL");
+					addDouble(plota_enum, "dbb_or_b", dbf2, "DBHP");
+					addInt(plota_enum, "damage", dbf2, "DAMAGEP");
+					addInt(plota_enum, "azimuth_to_tree", dbf2, "AZIM");
+					addDouble(plota_enum, "horizontal_distance_to_tree", dbf2, "DISTP");
+					
+					Entity trees_higher_than_20cm = plota_enum.addEntity("trees_higher_than_20cm"); 
+					addDouble(trees_higher_than_20cm,"butress_height", dbf2, "BUTHTP"); //TODO : adding blank value?
+					addDouble(trees_higher_than_20cm, "d_2point2m_ab", dbf2, "D22");
+					addDouble(trees_higher_than_20cm,"bole_height",dbf2, "BOLHTP"); // it should be code
+					addDouble(trees_higher_than_20cm, "tree_height", dbf2, "TRHT");
+					addInt(trees_higher_than_20cm, "grade", dbf2, "GRADEP");
+					addInt(trees_higher_than_20cm, "infestation", dbf2, "INFESTP");
+					addInt(trees_higher_than_20cm, "tree_class", dbf2, "TRCL");
+					addInt(trees_higher_than_20cm, "crown_class", dbf2, "CRCL");
+					addInt(trees_higher_than_20cm, "crown_position", dbf2, "CRPOS");
+					
+					
+					Entity bole_and_tree_height = plota_enum.addEntity("bole_and_tree_height");
+					addDouble(bole_and_tree_height,"horizontal_distance", dbf2, "DIST1");
+					addDouble(bole_and_tree_height,"height_of_base", dbf2, "BASE1");
+					addDouble(bole_and_tree_height, "percent_base", dbf2, "PERBASE1");
+					addDouble(bole_and_tree_height, "percent_crown_point", dbf2, "PERCP");
+					addDouble(bole_and_tree_height, "percent_top_of_tree", dbf2, "PERTOP");
+					
+					Entity buttress_and_diameter_above_buttress = plota_enum.addEntity("buttress_and_diameter_above_buttress");
+					addDouble(buttress_and_diameter_above_buttress, "horizontal_distance", dbf2, "DIST2");
+					addDouble(buttress_and_diameter_above_buttress, "percent_base", dbf2, "PERBASE2");
+					addDouble(buttress_and_diameter_above_buttress, "percent_buttress", dbf2, "PERCBUT");
+					
+					Entity d_02_ab = buttress_and_diameter_above_buttress.addEntity("d_02_ab");
+					addDouble(d_02_ab, "full_bars", dbf2, "FB1");
+					addDouble(d_02_ab, "quarter_bars", dbf2, "B41");
+					
+					addDouble(buttress_and_diameter_above_buttress, "percent_2point2m_ab", dbf2, "PERC22");
+					
+					Entity d_22_ab = buttress_and_diameter_above_buttress.addEntity("d_22_ab");
+					addDouble(d_22_ab, "full_bars", dbf2, "FB2");
+					addDouble(d_22_ab, "quarter_bars", dbf2, "B42");					
+				}
+			}
+			
+			
 			if(record.getId() == null ) {
 				recordDao.insert(record);
 			} else {
@@ -420,7 +472,15 @@ public class ImportDbf {
 
 
 	private void addInt(Entity entity, String collectField, DBF dbfFile, String dbField) throws NumberFormatException, ArrayIndexOutOfBoundsException, xBaseJException {
-		String strValue = ((NumField) dbfFile.getField(dbField)).get().trim();
+		String strValue;
+		try 
+		{
+			strValue = ((NumField) dbfFile.getField(dbField)).get().trim();
+		}catch(ClassCastException ex)
+		{
+			strValue = ((CharField) dbfFile.getField(dbField)).get().trim(); // there are cases where the int value in DBFs are stored as text
+		}
+		
 		if("0".equals(strValue))
 		{
 			IntegerAttribute attr = entity.addValue(collectField, Integer.parseInt("0"));
