@@ -129,7 +129,8 @@ public class ImportDbf {
 				System.out.println("\tProcessing folder " + f2.getPath());
 				try {
 					//processNaturalForest(f2, user);
-					processPermanentPlotA(f2, user);
+					//processPermanentPlotA(f2, user);
+					processPermanentPlotB(f2, user);
 				} catch (xBaseJException e) {
 					e.printStackTrace();
 					continue;
@@ -141,6 +142,134 @@ public class ImportDbf {
 
 	
 	
+
+	private void processPermanentPlotB(File folderPath, User user) throws xBaseJException, IOException {
+		System.out.println("\t\tPermanent Plot B ==========");
+		DBF dbf1 = new DBF(folderPath.getPath() + "\\" + "RT7(47).DBF");		
+		for (int i = 1; i <= dbf1.getRecordCount(); i++) {
+			dbf1.read();
+			
+			HashMap<String, Object> result = prepareCluster(dbf1, user);
+			Entity cluster = (Entity) result.get("cluster");
+			String hectarePlot = (String) result.get("tract");//for plat A, tract is hectare plot
+			String recordUnit = (String) result.get("subplot");//record unit
+			String control = (String) result.get("control");
+			String year = (String) result.get("year");
+			String clusterKey = (String) result.get("clusterKey");
+			String smallOrBig = (String) result.get("smallOrBig");			
+			CollectRecord record = (CollectRecord) result.get("record");
+			
+			Entity permanent_plot_b = cluster.addEntity("permanent_plot_b");			
+			addDouble(permanent_plot_b, "sector", dbf1, "SECTPB");
+			addDouble(permanent_plot_b, "segment_dist", dbf1, "DISTPB");
+			
+			//keys for permanent plot a
+			permanent_plot_b.addValue("control", Integer.parseInt(control));
+			permanent_plot_b.addValue("hectare_plot", Double.parseDouble(hectarePlot));//TOFIX : this should be integer! And the IDM should be updated too!
+			permanent_plot_b.addValue("record_unit", Integer.parseInt(recordUnit));
+			if("0".equals(smallOrBig) || "1".equals(smallOrBig)) {
+				permanent_plot_b.addValue("part", Integer.parseInt(smallOrBig)); //large part
+			} else {
+				permanent_plot_b.addValue("smallpart", Integer.parseInt(smallOrBig));
+			}
+			
+			addDouble(permanent_plot_b, "square_5x5", dbf1,"SQRSPB");
+			
+			Entity number_of_records = permanent_plot_b.addEntity("number_of_records");
+			addInt(number_of_records, "seedlings", dbf1, "SEEDNOPB");
+			addInt(number_of_records, "saplings", dbf1, "SAPNOPB");
+			addDouble(number_of_records, "rattan_less_than2point9m", dbf1, "RAT1PB");//TOFIX : should be int??/
+			addDouble(number_of_records, "rattan_more_than3point0m", dbf1, "RAT2PB");
+			addDouble(number_of_records, "bamboo", dbf1, "BAMPB");
+			addDouble(number_of_records, "depth_of_peat_layer", dbf1, "PEATPB");
+			addDouble(number_of_records, "depth_of_litter", dbf1, "LITTERPB");
+			//non exist depth_of_peath and depth_of_humus in DBFs
+			
+			Entity a_horizon = permanent_plot_b.addEntity("a_horizon");
+			addDouble(a_horizon, "depth", dbf1, "DEPA");
+			addDouble(a_horizon, "stones", dbf1, "STONA");
+			addInt(a_horizon, "colour", dbf1, "COLA");
+			addInt(a_horizon, "water_regime", dbf1, "WATA");
+			addInt(a_horizon, "texture", dbf1, "TEXA");
+			
+			Entity b_horizon= permanent_plot_b.addEntity("b_horizon");
+			addDouble(b_horizon, "depth", dbf1, "DEPB");
+			addDouble(b_horizon, "stones", dbf1, "STONB");
+			addInt(b_horizon, "colour", dbf1, "COLB");
+			addInt(b_horizon, "water_regime", dbf1, "WATB");
+			addInt(b_horizon, "texture", dbf1, "TEXB");
+			//skipping new / reenumeartion 50cm
+			
+			addInt(permanent_plot_b, "c_horizon", dbf1, "HORC");
+			//skipping slope_position
+			addInt(permanent_plot_b, "crew_number", dbf1, "CREWPB");
+			addCode(permanent_plot_b, "month", dbf1, "MONPB");
+			permanent_plot_b.addValue("year", Integer.parseInt(year));
+			
+			/*
+			DBF dbf2 = new DBF(folderPath.getPath() + "\\" + "RT6(46).DBF");
+			for(int j = 1; j <= dbf2.getRecordCount();j++)
+			{					
+				dbf2.read();
+				CharField fldCurrentKey = (CharField) dbf2.getField("KEY");
+				String currentKey = fldCurrentKey.get();
+				if(currentKey.equals(clusterKey))
+				{
+					Entity plota_enum = permanent_plot_b.addEntity("plota_enum");
+					addText(plota_enum, "name_of_species", dbf2, "LOKAL");
+					addDouble(plota_enum, "dbb_or_b", dbf2, "DBHP");
+					addInt(plota_enum, "damage", dbf2, "DAMAGEP");
+					addInt(plota_enum, "azimuth_to_tree", dbf2, "AZIM");
+					addDouble(plota_enum, "horizontal_distance_to_tree", dbf2, "DISTP");
+					
+					Entity trees_higher_than_20cm = plota_enum.addEntity("trees_higher_than_20cm"); 
+					addDouble(trees_higher_than_20cm,"butress_height", dbf2, "BUTHTP"); //TODO : adding blank value?
+					addDouble(trees_higher_than_20cm, "d_2point2m_ab", dbf2, "D22");
+					addDouble(trees_higher_than_20cm,"bole_height",dbf2, "BOLHTP"); // it should be code
+					addDouble(trees_higher_than_20cm, "tree_height", dbf2, "TRHT");
+					addInt(trees_higher_than_20cm, "grade", dbf2, "GRADEP");
+					addInt(trees_higher_than_20cm, "infestation", dbf2, "INFESTP");
+					addInt(trees_higher_than_20cm, "tree_class", dbf2, "TRCL");
+					addInt(trees_higher_than_20cm, "crown_class", dbf2, "CRCL");
+					addInt(trees_higher_than_20cm, "crown_position", dbf2, "CRPOS");
+					
+					
+					Entity bole_and_tree_height = plota_enum.addEntity("bole_and_tree_height");
+					addDouble(bole_and_tree_height,"horizontal_distance", dbf2, "DIST1");
+					addDouble(bole_and_tree_height,"height_of_base", dbf2, "BASE1");
+					addDouble(bole_and_tree_height, "percent_base", dbf2, "PERBASE1");
+					addDouble(bole_and_tree_height, "percent_crown_point", dbf2, "PERCP");
+					addDouble(bole_and_tree_height, "percent_top_of_tree", dbf2, "PERTOP");
+					
+					Entity buttress_and_diameter_above_buttress = plota_enum.addEntity("buttress_and_diameter_above_buttress");
+					addDouble(buttress_and_diameter_above_buttress, "horizontal_distance", dbf2, "DIST2");
+					addDouble(buttress_and_diameter_above_buttress, "percent_base", dbf2, "PERBASE2");
+					addDouble(buttress_and_diameter_above_buttress, "percent_buttress", dbf2, "PERCBUT");
+					
+					Entity d_02_ab = buttress_and_diameter_above_buttress.addEntity("d_02_ab");
+					addDouble(d_02_ab, "full_bars", dbf2, "FB1");
+					addDouble(d_02_ab, "quarter_bars", dbf2, "B41");
+					
+					addDouble(buttress_and_diameter_above_buttress, "percent_2point2m_ab", dbf2, "PERC22");
+					
+					Entity d_22_ab = buttress_and_diameter_above_buttress.addEntity("d_22_ab");
+					addDouble(d_22_ab, "full_bars", dbf2, "FB2");
+					addDouble(d_22_ab, "quarter_bars", dbf2, "B42");					
+				}
+			}*/
+			
+			
+			if(record.getId() == null ) {
+				recordDao.insert(record);
+			} else {
+				recordDao.update(record);
+			}
+		}
+		
+	}
+
+
+
 
 	private void processPermanentPlotA(File folderPath, User user) throws xBaseJException, IOException {
 		System.out.println("\t\tPermanent Plot A ==========");
@@ -248,8 +377,6 @@ public class ImportDbf {
 				recordDao.update(record);
 			}
 		}
-		
-		
 	}
 
 
