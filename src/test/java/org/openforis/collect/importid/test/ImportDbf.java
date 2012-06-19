@@ -128,8 +128,8 @@ public class ImportDbf {
 			{
 				System.out.println("\tProcessing folder " + f2.getPath());
 				try {
-					//processNaturalForest(f2, user);
-					//processPermanentPlotA(f2, user);
+					processNaturalForest(f2, user);
+					processPermanentPlotA(f2, user);
 					processPermanentPlotB(f2, user);
 				} catch (xBaseJException e) {
 					e.printStackTrace();
@@ -206,8 +206,8 @@ public class ImportDbf {
 			addCode(permanent_plot_b, "month", dbf1, "MONPB");
 			permanent_plot_b.addValue("year", Integer.parseInt(year));
 			
-			/*
-			DBF dbf2 = new DBF(folderPath.getPath() + "\\" + "RT6(46).DBF");
+			
+			DBF dbf2 = new DBF(folderPath.getPath() + "\\" + "RT8(48).DBF");
 			for(int j = 1; j <= dbf2.getRecordCount();j++)
 			{					
 				dbf2.read();
@@ -215,48 +215,45 @@ public class ImportDbf {
 				String currentKey = fldCurrentKey.get();
 				if(currentKey.equals(clusterKey))
 				{
-					Entity plota_enum = permanent_plot_b.addEntity("plota_enum");
-					addText(plota_enum, "name_of_species", dbf2, "LOKAL");
-					addDouble(plota_enum, "dbb_or_b", dbf2, "DBHP");
-					addInt(plota_enum, "damage", dbf2, "DAMAGEP");
-					addInt(plota_enum, "azimuth_to_tree", dbf2, "AZIM");
-					addDouble(plota_enum, "horizontal_distance_to_tree", dbf2, "DISTP");
+					Entity plotb_ssr = permanent_plot_b.addEntity("plotb_ssr");
+					addText(plotb_ssr, "name_of_species", dbf2, "LOKAL");
+					//TOFIX : count is non exist in foxpro, but exist in tally sheet. Should I calculate it?
+					addInt(plotb_ssr, "seedlings", dbf2, "SEEDNOP");
+					addInt(plotb_ssr, "saplings", dbf2, "SAPNOP");
+					addInt(plotb_ssr, "rattan_lte_2point9m", dbf2, "RAT1NOP");
 					
-					Entity trees_higher_than_20cm = plota_enum.addEntity("trees_higher_than_20cm"); 
-					addDouble(trees_higher_than_20cm,"butress_height", dbf2, "BUTHTP"); //TODO : adding blank value?
-					addDouble(trees_higher_than_20cm, "d_2point2m_ab", dbf2, "D22");
-					addDouble(trees_higher_than_20cm,"bole_height",dbf2, "BOLHTP"); // it should be code
-					addDouble(trees_higher_than_20cm, "tree_height", dbf2, "TRHT");
-					addInt(trees_higher_than_20cm, "grade", dbf2, "GRADEP");
-					addInt(trees_higher_than_20cm, "infestation", dbf2, "INFESTP");
-					addInt(trees_higher_than_20cm, "tree_class", dbf2, "TRCL");
-					addInt(trees_higher_than_20cm, "crown_class", dbf2, "CRCL");
-					addInt(trees_higher_than_20cm, "crown_position", dbf2, "CRPOS");
+					Entity rattan_gte_3m = plotb_ssr.addEntity("rattan_gte_3m");
+					Entity s_single = rattan_gte_3m.addEntity("s_single");
+					addInt(s_single, "stems", dbf2, "RAT2NOP");
+					addDouble(s_single, "d_max", dbf2, "RAT2DMXP");
 					
-					
-					Entity bole_and_tree_height = plota_enum.addEntity("bole_and_tree_height");
-					addDouble(bole_and_tree_height,"horizontal_distance", dbf2, "DIST1");
-					addDouble(bole_and_tree_height,"height_of_base", dbf2, "BASE1");
-					addDouble(bole_and_tree_height, "percent_base", dbf2, "PERBASE1");
-					addDouble(bole_and_tree_height, "percent_crown_point", dbf2, "PERCP");
-					addDouble(bole_and_tree_height, "percent_top_of_tree", dbf2, "PERTOP");
-					
-					Entity buttress_and_diameter_above_buttress = plota_enum.addEntity("buttress_and_diameter_above_buttress");
-					addDouble(buttress_and_diameter_above_buttress, "horizontal_distance", dbf2, "DIST2");
-					addDouble(buttress_and_diameter_above_buttress, "percent_base", dbf2, "PERBASE2");
-					addDouble(buttress_and_diameter_above_buttress, "percent_buttress", dbf2, "PERCBUT");
-					
-					Entity d_02_ab = buttress_and_diameter_above_buttress.addEntity("d_02_ab");
-					addDouble(d_02_ab, "full_bars", dbf2, "FB1");
-					addDouble(d_02_ab, "quarter_bars", dbf2, "B41");
-					
-					addDouble(buttress_and_diameter_above_buttress, "percent_2point2m_ab", dbf2, "PERC22");
-					
-					Entity d_22_ab = buttress_and_diameter_above_buttress.addEntity("d_22_ab");
-					addDouble(d_22_ab, "full_bars", dbf2, "FB2");
-					addDouble(d_22_ab, "quarter_bars", dbf2, "B42");					
+					Entity c_cluster = rattan_gte_3m.addEntity("c_cluster");
+					addDouble(c_cluster,"d_min",dbf2,"RAT2DMNP");
+					addDouble(c_cluster,"d_avg",dbf2,"RAT2DAVP");
+					addDouble(c_cluster,"l_avg",dbf2,"RAT2LP");							
 				}
-			}*/
+			}
+			
+			DBF dbf3 = new DBF(folderPath.getPath() + "\\" + "RT9(49).DBF");
+			for(int j = 1; j <= dbf3.getRecordCount();j++)
+			{					
+				dbf3.read();
+				CharField fldCurrentKey = (CharField) dbf3.getField("KEY");
+				String currentKey = fldCurrentKey.get();
+				if(currentKey.equals(clusterKey))
+				{
+					Entity bamboo = permanent_plot_b.addEntity("bamboo");
+					addText(bamboo, "name_of_species", dbf3, "LOKAL");
+					Entity no_culm = bamboo.addEntity("no_culm");
+					addInt(no_culm,"one_year", dbf3, "NO1YRPB");
+					addInt(no_culm,"two_year", dbf3, "NO2YRPB");
+					addInt(no_culm,"total", dbf3, "NOTOTPB");
+					addInt(no_culm,"live_stumps", dbf3, "LVSTMPB");
+					
+					addInt(bamboo, "azimuth_to_bamboo", dbf3, "AZMPB");
+					addDouble(bamboo, "horizontal_distance_to_bamboo", dbf3, "DISTPB");	
+				}
+			}
 			
 			
 			if(record.getId() == null ) {
