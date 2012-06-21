@@ -94,7 +94,7 @@ public class ImportDbf {
 	@Test
 	public void testImportCluster() throws IOException,
 			URISyntaxException {
-		URI uri = ClassLoader.getSystemResource("cluster").toURI();
+		URI uri = new URI("E:\\DBF\\cluster");//; ClassLoader.getSystemResource("cluster").toURI();
 		File dir = new File(uri);
 
 		String[] children = dir.list();
@@ -122,18 +122,17 @@ public class ImportDbf {
 		User user = userManager.loadByUserName("eko");
 		File[] files = dir.listFiles(fileFilter);
 		for (File f : files) { // BPKH1_Medan
-			System.out.println("Processing folder " + f.getPath());
+			System.out.println("Folder " + f.getPath());
 			File[] files2 = f.listFiles(fileFilter);
 			for (File f2 : files2)
 			{
-				System.out.println("\tProcessing folder " + f2.getPath());
+				System.out.println("\tSubfolder " + f2.getPath());
 				try {
 					processNaturalForest(f2, user);
 					processPermanentPlotA(f2, user);
 					processPermanentPlotB(f2, user);
 				} catch (xBaseJException e) {
 					e.printStackTrace();
-					continue;
 				}
 			}
 		}
