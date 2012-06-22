@@ -653,7 +653,7 @@ public class ImportDbf {
 	private double safeDouble(String string) {
 		// TODO Auto-generated method stub
 	try{
-			return Double.parseDouble(string);
+			return Double.parseDouble(string.trim());
 		}catch(Exception e){
 			e.printStackTrace();
 			return 666.0;
@@ -667,9 +667,10 @@ public class ImportDbf {
 	private String generateYear(String twoDigitYear) {
 		int year;
 		String result;
+		if(twoDigitYear.length()==1) twoDigitYear = "0" + twoDigitYear;
 		try {
 			year = safeInt(twoDigitYear);
-			if(year<11){
+			if(year>12){
 				result = "19" + twoDigitYear;//
 			}else{
 				result = "20" + twoDigitYear;//11
@@ -681,21 +682,45 @@ public class ImportDbf {
 		}
 		return result;
 	}
+	
+	@Test
+	public void testYear()
+	{
+		Assert.assertEquals("1990", generateYear("90"));
+		Assert.assertEquals("1991", generateYear("91"));
+		Assert.assertEquals("1992", generateYear("92"));
+		Assert.assertEquals("1993", generateYear("93"));
+		Assert.assertEquals("1994", generateYear("94"));
+		Assert.assertEquals("1995", generateYear("95"));
+		Assert.assertEquals("1996", generateYear("96"));
+		Assert.assertEquals("1997", generateYear("97"));
+		Assert.assertEquals("1998", generateYear("98"));
+		Assert.assertEquals("1999", generateYear("99"));
+		Assert.assertEquals("2000", generateYear("0"));
+		Assert.assertEquals("2000", generateYear("00"));
+		Assert.assertEquals("2001", generateYear("01"));
+		Assert.assertEquals("2002", generateYear("02"));
+		Assert.assertEquals("2003", generateYear("03"));
+		Assert.assertEquals("2004", generateYear("04"));
+		Assert.assertEquals("2005", generateYear("05"));
+		Assert.assertEquals("2006", generateYear("06"));
+		Assert.assertEquals("2007", generateYear("07"));
+		Assert.assertEquals("2008", generateYear("08"));
+		Assert.assertEquals("2009", generateYear("09"));
+		Assert.assertEquals("2010", generateYear("10"));
+		Assert.assertEquals("2011", generateYear("11"));
+		Assert.assertEquals("2012", generateYear("12"));
+		Assert.assertEquals("2007", generateYear("7"));
+	}
 
 	private int safeInt(String twoDigitYear) {
-		// TODO Auto-generated method stub
-		try{			return Integer.parseInt(twoDigitYear);
-			
-			
+		try{			
+			return Integer.parseInt(twoDigitYear.trim());
 		}catch(Exception e){
 			return 666;
 		}
-		
 	}
-
-
-
-
+	
 	protected void clearData(Factory jf) {
 		jf.delete(OFC_TAXON_VERNACULAR_NAME).execute();
 		jf.delete(OFC_TAXON).where(OFC_TAXON.PARENT_ID.isNotNull()).execute();
