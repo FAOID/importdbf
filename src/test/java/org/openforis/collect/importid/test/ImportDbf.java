@@ -94,7 +94,7 @@ public class ImportDbf {
 	@Test
 	public void testImportCluster() throws IOException,
 			URISyntaxException {
-		URI uri = ClassLoader.getSystemResource("cluster").toURI();
+		URI uri = new URI("file:///E:/DBF/cluster");//URI uri = ClassLoader.getSystemResource("cluster").toURI();
 		File dir = new File(uri);
 
 		String[] children = dir.list();
@@ -121,12 +121,15 @@ public class ImportDbf {
 		
 		User user = userManager.loadByUserName("eko");
 		File[] files = dir.listFiles(fileFilter);
+		System.out.println("Starting at "  + new Date());
+		System.out.println("Working with " + files.length + " folder");
 		for (File f : files) { // BPKH1_Medan
-			System.out.println("Processing folder " + f.getPath());
+			System.out.println("Folder " + f.getPath());
 			File[] files2 = f.listFiles(fileFilter);
+			System.out.println("Working with " + files2.length + " subfolder");
 			for (File f2 : files2)
 			{
-				System.out.println("\tProcessing folder " + f2.getPath());
+				System.out.println("\tSubfolder " + f2.getPath());
 				try {
 					processNaturalForest(f2, user);
 					processPermanentPlotA(f2, user);
@@ -137,14 +140,14 @@ public class ImportDbf {
 				}
 			}
 		}
-
+		System.out.println("Ended at"  + new Date());
 	}
 
 	
 	
 
 	private void processPermanentPlotB(File folderPath, User user) throws xBaseJException, IOException {
-		System.out.println("\t\tPermanent Plot B ==========");
+		System.out.println("\t\tPermanent Plot B");
 		DBF dbf1 = new DBF(folderPath.getPath() + "\\" + "RT7(47).DBF");		
 		for (int i = 1; i <= dbf1.getRecordCount(); i++) {
 			dbf1.read();
@@ -159,18 +162,18 @@ public class ImportDbf {
 			String smallOrBig = (String) result.get("smallOrBig");			
 			CollectRecord record = (CollectRecord) result.get("record");
 			
-			Entity permanent_plot_b = cluster.addEntity("permanent_plot_b");			
+			Entity permanent_plot_b = cluster.addEntity("permanent_plot_b");
 			addDouble(permanent_plot_b, "sector", dbf1, "SECTPB");
 			addDouble(permanent_plot_b, "segment_dist", dbf1, "DISTPB");
 			
 			//keys for permanent plot a
-			permanent_plot_b.addValue("control", Integer.parseInt(control));
-			permanent_plot_b.addValue("hectare_plot", Double.parseDouble(hectarePlot));//TOFIX : this should be integer! And the IDM should be updated too!
-			permanent_plot_b.addValue("record_unit", Integer.parseInt(recordUnit));
+			permanent_plot_b.addValue("control", safeInt(control));
+			permanent_plot_b.addValue("hectare_plot", safeDouble(hectarePlot));//TOFIX : this should be integer! And the IDM should be updated too!
+			permanent_plot_b.addValue("record_unit", safeInt(recordUnit));
 			if("0".equals(smallOrBig) || "1".equals(smallOrBig)) {
-				permanent_plot_b.addValue("part", Integer.parseInt(smallOrBig)); //large part
+				permanent_plot_b.addValue("part", safeInt(smallOrBig)); //large part
 			} else {
-				permanent_plot_b.addValue("smallpart", Integer.parseInt(smallOrBig));
+				permanent_plot_b.addValue("smallpart", safeInt(smallOrBig));
 			}
 			
 			addDouble(permanent_plot_b, "square_5x5", dbf1,"SQRSPB");
@@ -204,7 +207,7 @@ public class ImportDbf {
 			//skipping slope_position
 			addInt(permanent_plot_b, "crew_number", dbf1, "CREWPB");
 			addCode(permanent_plot_b, "month", dbf1, "MONPB");
-			permanent_plot_b.addValue("year", Integer.parseInt(year));
+			permanent_plot_b.addValue("year", safeInt(year));
 			
 			
 			DBF dbf2 = new DBF(folderPath.getPath() + "\\" + "RT8(48).DBF");
@@ -269,7 +272,7 @@ public class ImportDbf {
 
 
 	private void processPermanentPlotA(File folderPath, User user) throws xBaseJException, IOException {
-		System.out.println("\t\tPermanent Plot A ==========");
+		System.out.println("\t\tPermanent Plot A");
 		DBF dbf1 = new DBF(folderPath.getPath() + "\\" + "RT5(45).DBF");		
 		for (int i = 1; i <= dbf1.getRecordCount(); i++) {
 			dbf1.read();
@@ -291,13 +294,13 @@ public class ImportDbf {
 			addDouble(permanent_plot_a, "segment_dist", dbf1, "DISTANCE");
 			
 			//keys for permanent plot a
-			permanent_plot_a.addValue("control", Integer.parseInt(control));
-			permanent_plot_a.addValue("hectare_plot", Double.parseDouble(hectarePlot));//TOFIX : this should be integer! And the IDM should be updated too!
-			permanent_plot_a.addValue("record_unit", Integer.parseInt(recordUnit));
+			permanent_plot_a.addValue("control", safeInt(control));
+			permanent_plot_a.addValue("hectare_plot", safeDouble(hectarePlot));//TOFIX : this should be integer! And the IDM should be updated too!
+			permanent_plot_a.addValue("record_unit", safeInt(recordUnit));
 			if("0".equals(smallOrBig) || "1".equals(smallOrBig)) {
-				permanent_plot_a.addValue("largepart", Integer.parseInt(smallOrBig)); //large part
+				permanent_plot_a.addValue("largepart", safeInt(smallOrBig)); //large part
 			} else {
-				permanent_plot_a.addValue("part", Integer.parseInt(smallOrBig));
+				permanent_plot_a.addValue("part", safeInt(smallOrBig));
 			}
 			
 			addDouble(permanent_plot_a, "square_5x3", dbf1,"SQUARES");
@@ -314,7 +317,7 @@ public class ImportDbf {
 			addInt(permanent_plot_a, "tp_recorded", dbf1, "NOTREES");
 			addInt(permanent_plot_a, "crew_no", dbf1, "CREWNO");
 			addCode(permanent_plot_a,"month",dbf1, "MONTHIN");
-			permanent_plot_a.addValue("year", Integer.parseInt(year));
+			permanent_plot_a.addValue("year", safeInt(year));
 			
 			DBF dbf2 = new DBF(folderPath.getPath() + "\\" + "RT6(46).DBF");
 			for(int j = 1; j <= dbf2.getRecordCount();j++)
@@ -380,7 +383,7 @@ public class ImportDbf {
 
 
 	private void processNaturalForest(File folderPath, User user) throws xBaseJException, IOException {		
-		System.out.println("\t\tNATURAL FOREST ==========");
+		System.out.println("\t\tNATURAL FOREST");
 		DBF dbf1 = new DBF(folderPath.getPath() + "\\" + "RT1.DBF");		
 		for (int i = 1; i <= dbf1.getRecordCount(); i++) {
 			dbf1.read();
@@ -399,20 +402,20 @@ public class ImportDbf {
 			
 			Entity nf = cluster.addEntity("natural_forest");
 			//keys : what else should be included in keys?
-			nf.addValue("tract_no", Integer.parseInt(tract));
-			nf.addValue("subplot_no", Integer.parseInt(subplot));
+			nf.addValue("tract_no", safeInt(tract));
+			nf.addValue("subplot_no", safeInt(subplot));
 			
 			if("0".equals(smallOrBig) || "1".equals(smallOrBig)) {
-				nf.addValue("part", Integer.parseInt(smallOrBig)); //large part 
+				nf.addValue("part", safeInt(smallOrBig)); //large part 
 			} else {
-				nf.addValue("smallpart", Integer.parseInt(smallOrBig));//small part
+				nf.addValue("smallpart", safeInt(smallOrBig));//small part
 			}
 			
 			//do this by the contents of the old foxpro fields
-			nf.addValue("sector", getDouble(dbf1,"SECTOR"));
-			nf.addValue("segment_dist", getDouble(dbf1,"DISTANCE"));
+			addDouble(nf, "sector", dbf1, "SECTOR");
+			addDouble(nf, "segment_dist", dbf1, "DISTANCE");
 			
-			nf.addValue("control", Integer.parseInt(control));
+			nf.addValue("control", safeInt(control));
 			
 			//?Square
 			addCode(nf,"province",dbf1,"PROVINCE");
@@ -435,7 +438,7 @@ public class ImportDbf {
 			
 			addInt(nf, "crew_no", dbf1, "CREWNO");
 			addCode(nf,"month",dbf1, "MONTHIN");
-			nf.addValue("year", Integer.parseInt(year));
+			nf.addValue("year", safeInt(year));
 			
 			
 			DBF dbf2 = new DBF(folderPath.getPath() + "\\" + "RT2.DBF");
@@ -529,13 +532,13 @@ public class ImportDbf {
 		List<CollectRecord> recordList = recordDao.loadSummaries(survey, "cluster", utmZone,easting,northing);
 		if(recordList.size()==0)
 		{
-			System.out.println("\tNew cluster, creating : " + clusterKey + " : " + utmZone + " " + easting + " " + northing + " "  + year + " " + control + " " + tract + " " + subplot + " " +smallOrBig);
+			System.out.println("\t\tNew cluster, creating : " + clusterKey + " : " + utmZone + " " + easting + " " + northing + " "  + year + " " + control + " " + tract + " " + subplot + " " +smallOrBig);
 			record = new CollectRecord(survey, "1.0");
 			cluster = record.createRootEntity("cluster");
-			cluster.addValue("utm_zone", Integer.parseInt(utmZone));
-			cluster.addValue("easting", Integer.parseInt(easting));
-			cluster.addValue("northing", Integer.parseInt(northing));
-			cluster.addValue("year", Integer.parseInt(year));//this is new one, added by me, not in the tally sheet
+			cluster.addValue("utm_zone", safeInt(utmZone));
+			cluster.addValue("easting", safeInt(easting));
+			cluster.addValue("northing", safeInt(northing));
+			cluster.addValue("year", safeInt(year));//this is new one, added by me, not in the tally sheet
 		}else{
 			//System.out.println("Existing cluster, loading : " + clusterKey + " : " + utmZone + " " + easting + " " + northing + " "  + year + " " + control + " " + tract + " " + subplot + " " +smallOrBig);
 			record = recordDao.load(survey, recordList.get(0).getId(), 1);									
@@ -570,7 +573,7 @@ public class ImportDbf {
 		String strValue = ((NumField) dbfFile.getField(dbField)).get().trim();
 		if("0".equals(strValue))
 		{
-			RealAttribute attr = entity.addValue(collectField, Double.parseDouble("0"));
+			RealAttribute attr = entity.addValue(collectField, safeDouble("0"));
 			//attr.getField(0).setSymbol('*');
 			//attr.getField(0).setRemarks("Zero value specified");
 			
@@ -582,7 +585,13 @@ public class ImportDbf {
 		}
 		else if(!"".equals(strValue))
 		{
-			entity.addValue(collectField, Double.parseDouble(strValue));
+			try { 
+				entity.addValue(collectField, safeDouble(strValue));
+			} catch (Exception e)
+			{
+				e.printStackTrace();
+				entity.addValue(collectField, safeDouble("666"));
+			}
 		}
 	}
 
@@ -607,7 +616,7 @@ public class ImportDbf {
 		
 		if("0".equals(strValue))
 		{
-			IntegerAttribute attr = entity.addValue(collectField, Integer.parseInt("0"));
+			IntegerAttribute attr = entity.addValue(collectField, safeInt("0"));
 			//attr.getField(0).setSymbol('*');
 			//attr.getField(0).setRemarks("Zero value specified");
 			
@@ -619,7 +628,13 @@ public class ImportDbf {
 		}
 		else if(!"".equals(strValue))
 		{
-			entity.addValue(collectField, Integer.parseInt(strValue));
+			try {
+				entity.addValue(collectField, safeInt(strValue));
+			} catch (Exception e)
+			{
+				e.printStackTrace();
+				entity.addValue(collectField, safeInt("666"));
+			}
 		}
 	}
 
@@ -632,17 +647,54 @@ public class ImportDbf {
 	}
 
 	private double getDouble(DBF dbfFile, String field) throws xBaseJException {
-		return Double.parseDouble((((NumField) dbfFile.getField(field)).get().trim()));
+		return safeDouble((((NumField) dbfFile.getField(field)).get().trim()));
 	}
 
-	private String generateYear(String twoDigitYear) {
-		int year = Integer.parseInt(twoDigitYear);
-		if(year<11){
-			return "19" + twoDigitYear;//
-		}else{
-			return "20" + twoDigitYear;//11
+	private double safeDouble(String string) {
+		// TODO Auto-generated method stub
+	try{
+			return Double.parseDouble(string);
+		}catch(Exception e){
+			e.printStackTrace();
+			return 666.0;
 		}
+		
 	}
+
+
+
+
+	private String generateYear(String twoDigitYear) {
+		int year;
+		String result;
+		try {
+			year = safeInt(twoDigitYear);
+			if(year<11){
+				result = "19" + twoDigitYear;//
+			}else{
+				result = "20" + twoDigitYear;//11
+			}
+		} catch(Exception e)
+		{
+			e.printStackTrace();
+			result = "666";
+		}
+		return result;
+	}
+
+	private int safeInt(String twoDigitYear) {
+		// TODO Auto-generated method stub
+		try{			return Integer.parseInt(twoDigitYear);
+			
+			
+		}catch(Exception e){
+			return 666;
+		}
+		
+	}
+
+
+
 
 	protected void clearData(Factory jf) {
 		jf.delete(OFC_TAXON_VERNACULAR_NAME).execute();
@@ -656,6 +708,7 @@ public class ImportDbf {
 		clearData(factoryDao.getJooqFactory());
 	}
 
+	/*
 	// @Test
 	public void testImportSpecies() throws xBaseJException, IOException {
 		String provinces[] = { "species/region/irian.dbf",
@@ -808,7 +861,7 @@ public class ImportDbf {
 						System.out
 								.println("No province code for v.n " + vnName);
 					} else {
-						qualifier.add("" + Integer.parseInt(provinceCode));// remove
+						qualifier.add("" + safeInt(provinceCode));// remove
 																			// left
 																			// padding
 																			// zero,
@@ -821,7 +874,6 @@ public class ImportDbf {
 			}
 
 		}
-
-	}
+	}*/
 
 }
