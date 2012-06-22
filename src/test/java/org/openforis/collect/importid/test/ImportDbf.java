@@ -517,9 +517,9 @@ public class ImportDbf {
 		CollectRecord record;
 		CharField fldKey = (CharField) dbf1.getField("KEY");
 		String clusterKey = fldKey.get().toString();					
-		String utmZone = clusterKey.substring(0,2);
-		String easting = clusterKey.substring(2,5);
-		String northing = clusterKey.substring(5,9);
+		int utmZone = safeInt(clusterKey.substring(0,2));
+		int easting = safeInt(clusterKey.substring(2,5));
+		int northing = safeInt(clusterKey.substring(5,9));
 		String year = generateYear(clusterKey.substring(9, 11));
 		String control = clusterKey.substring(11,12);
 		String tract = clusterKey.substring(12, 13);
@@ -529,15 +529,15 @@ public class ImportDbf {
 		CollectSurvey survey = surveyManager.get("idnfi");										
 		Entity cluster;
 		
-		List<CollectRecord> recordList = recordDao.loadSummaries(survey, "cluster", utmZone,easting,northing);
+		List<CollectRecord> recordList = recordDao.loadSummaries(survey, "cluster", utmZone + "",easting + "", northing + "");
 		if(recordList.size()==0)
 		{
 			System.out.println("\t\tNew cluster, creating : " + clusterKey + " : " + utmZone + " " + easting + " " + northing + " "  + year + " " + control + " " + tract + " " + subplot + " " +smallOrBig);
 			record = new CollectRecord(survey, "1.0");
 			cluster = record.createRootEntity("cluster");
-			cluster.addValue("utm_zone", safeInt(utmZone));
-			cluster.addValue("easting", safeInt(easting));
-			cluster.addValue("northing", safeInt(northing));
+			cluster.addValue("utm_zone", utmZone);
+			cluster.addValue("easting", easting);
+			cluster.addValue("northing", northing);
 			cluster.addValue("year", safeInt(year));//this is new one, added by me, not in the tally sheet
 		}else{
 			//System.out.println("Existing cluster, loading : " + clusterKey + " : " + utmZone + " " + easting + " " + northing + " "  + year + " " + control + " " + tract + " " + subplot + " " +smallOrBig);
@@ -549,9 +549,9 @@ public class ImportDbf {
 		record.setCreationDate(new Date());
 		record.setStep(Step.ENTRY);
 		ArrayList<String> keys = new ArrayList<String>();
-		keys.add(utmZone);
-		keys.add(easting);
-		keys.add(northing);
+		keys.add(utmZone+"");
+		keys.add(easting+"");
+		keys.add(northing+"");
 		record.setCreatedBy(user);
 		record.setModifiedBy(user);
 		record.setModifiedDate(new Date());
@@ -683,7 +683,7 @@ public class ImportDbf {
 		return result;
 	}
 	
-	@Test
+	//@Test
 	public void testYear()
 	{
 		Assert.assertEquals("1990", generateYear("90"));
