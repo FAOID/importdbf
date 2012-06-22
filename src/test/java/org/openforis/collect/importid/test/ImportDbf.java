@@ -123,6 +123,7 @@ public class ImportDbf {
 		File[] files = dir.listFiles(fileFilter);
 		System.out.println("Starting at "  + new Date());
 		System.out.println("Working with " + files.length + " folder");
+		long start = System.currentTimeMillis();
 		for (File f : files) { // BPKH1_Medan
 			System.out.println("Folder " + f.getPath());
 			File[] files2 = f.listFiles(fileFilter);
@@ -140,7 +141,23 @@ public class ImportDbf {
 				}
 			}
 		}
+		// Get elapsed time in milliseconds
+		long elapsedTimeMillis = System.currentTimeMillis()-start;
+
+		// Get elapsed time in seconds
+		float elapsedTimeSec = elapsedTimeMillis/1000F;
+
+		// Get elapsed time in minutes
+		float elapsedTimeMin = elapsedTimeMillis/(60*1000F);
+
+		// Get elapsed time in hours
+		float elapsedTimeHour = elapsedTimeMillis/(60*60*1000F);
+
+		// Get elapsed time in days
+		float elapsedTimeDay = elapsedTimeMillis/(24*60*60*1000F);
 		System.out.println("Ended at"  + new Date());
+		System.out.println("Time tooks = " + elapsedTimeDay + " hari :" + elapsedTimeHour + " jam :" + elapsedTimeMin + " menit :" + elapsedTimeSec + " detik :" + elapsedTimeMillis + " milidetik");
+		
 	}
 
 	
