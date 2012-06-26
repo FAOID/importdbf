@@ -83,9 +83,7 @@
         <version>2.11</version>
         <configuration>
           <testSourceDirectory>${basedir}/src/test/java</testSourceDirectory>
-          <excludes>
-            <exclude>**/*IntegrationTest.java</exclude>
-          </excludes>
+          
         </configuration>
       </plugin>
     </plugins>
