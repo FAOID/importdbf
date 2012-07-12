@@ -666,12 +666,22 @@ public class ImportDbf {
 	}
 
 	private String generateYear(String twoDigitYear) {
-		int year = Integer.parseInt(twoDigitYear);
-		if(year<11){
-			return "19" + twoDigitYear;//
-		}else{
-			return "20" + twoDigitYear;//11
+		int year;
+		String result;
+		if(twoDigitYear.length()==1) twoDigitYear = "0" + twoDigitYear;
+		try {
+			year = safeInt(twoDigitYear);
+			if(year>12){
+				result = "19" + twoDigitYear;//
+			}else{
+				result = "20" + twoDigitYear;//11
+			}
+		} catch(Exception e)
+		{
+			e.printStackTrace();
+			result = "666";
 		}
+		return result;
 	}
 
 	protected void clearData(Factory jf) {
