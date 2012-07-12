@@ -26,6 +26,7 @@ import org.junit.runner.RunWith;
 import org.openforis.collect.manager.SurveyManager;
 import org.openforis.collect.manager.UserManager;
 import org.openforis.collect.model.CollectRecord;
+import org.openforis.collect.model.FieldSymbol;
 import org.openforis.collect.model.Symbol;
 import org.openforis.collect.model.User;
 import org.openforis.collect.model.CollectRecord.Step;
@@ -592,7 +593,7 @@ public class ImportDbf {
 		}else if(strValue == null)
 		{
 			RealAttribute attr = entity.addValue(collectField, (Double) null);
-			attr.getField(0).setSymbol(Symbol.ILLEGIBLE);
+			attr.getField(0).setSymbol(FieldSymbol.BLANK_ON_FORM.getCode());
 		}
 		else if(strValue != null)
 		{
