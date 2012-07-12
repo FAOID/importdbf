@@ -26,6 +26,7 @@ import org.junit.runner.RunWith;
 import org.openforis.collect.manager.SurveyManager;
 import org.openforis.collect.manager.UserManager;
 import org.openforis.collect.model.CollectRecord;
+import org.openforis.collect.model.Symbol;
 import org.openforis.collect.model.User;
 import org.openforis.collect.model.CollectRecord.Step;
 import org.openforis.collect.model.CollectSurvey;
@@ -94,7 +95,7 @@ public class ImportDbf {
 	@Test
 	public void testImportCluster() throws IOException,
 			URISyntaxException {
-		URI uri = new URI("E:\\DBF\\cluster");//; ClassLoader.getSystemResource("cluster").toURI();
+		URI uri = new URI("file:///E:/DBF/processing");//; ClassLoader.getSystemResource("cluster").toURI();
 		File dir = new File(uri);
 
 		String[] children = dir.list();
@@ -115,13 +116,14 @@ public class ImportDbf {
 			}
 		};
 		
-		DialectAwareJooqFactory jf = factoryDao.getJooqFactory();
-		jf.delete(OFC_RECORD).where(OFC_RECORD.CREATED_BY_ID.equal(1)).execute();
-		
-		
 		User user = userManager.loadByUserName("eko");
+		
+		DialectAwareJooqFactory jf = factoryDao.getJooqFactory();
+		jf.delete(OFC_RECORD).where(OFC_RECORD.CREATED_BY_ID.equal(user.getId())).execute();
+		
+		
 		File[] files = dir.listFiles(fileFilter);
-		for (File f : files) { // BPKH1_Medan
+		for (File f : files) {
 			System.out.println("Folder " + f.getPath());
 			File[] files2 = f.listFiles(fileFilter);
 			for (File f2 : files2)
@@ -167,7 +169,7 @@ public class ImportDbf {
 			permanent_plot_b.addValue("hectare_plot", Double.parseDouble(hectarePlot));//TOFIX : this should be integer! And the IDM should be updated too!
 			permanent_plot_b.addValue("record_unit", Integer.parseInt(recordUnit));
 			if("0".equals(smallOrBig) || "1".equals(smallOrBig)) {
-				permanent_plot_b.addValue("part", Integer.parseInt(smallOrBig)); //large part
+				permanent_plot_b.addValue("largepart", Integer.parseInt(smallOrBig)); //large part
 			} else {
 				permanent_plot_b.addValue("smallpart", Integer.parseInt(smallOrBig));
 			}
@@ -296,7 +298,7 @@ public class ImportDbf {
 			if("0".equals(smallOrBig) || "1".equals(smallOrBig)) {
 				permanent_plot_a.addValue("largepart", Integer.parseInt(smallOrBig)); //large part
 			} else {
-				permanent_plot_a.addValue("part", Integer.parseInt(smallOrBig));
+				permanent_plot_a.addValue("smallpart", Integer.parseInt(smallOrBig));
 			}
 			
 			addDouble(permanent_plot_a, "square_5x3", dbf1,"SQUARES");
@@ -402,7 +404,7 @@ public class ImportDbf {
 			nf.addValue("subplot_no", Integer.parseInt(subplot));
 			
 			if("0".equals(smallOrBig) || "1".equals(smallOrBig)) {
-				nf.addValue("part", Integer.parseInt(smallOrBig)); //large part 
+				nf.addValue("largepart", Integer.parseInt(smallOrBig)); //large part 
 			} else {
 				nf.addValue("smallpart", Integer.parseInt(smallOrBig));//small part
 			}
@@ -522,10 +524,15 @@ public class ImportDbf {
 		String subplot = clusterKey.substring(13, 15);
 		String smallOrBig = clusterKey.substring(15, 16);
 		
+		int iutmZone = Integer.parseInt(utmZone);
+		int ieasting = Integer.parseInt(easting);
+		int inorthing = Integer.parseInt(northing);
+		
+		
 		CollectSurvey survey = surveyManager.get("idnfi");										
 		Entity cluster;
 		
-		List<CollectRecord> recordList = recordDao.loadSummaries(survey, "cluster", utmZone,easting,northing);
+		List<CollectRecord> recordList = recordDao.loadSummaries(survey, "cluster", iutmZone + "", ieasting + "", inorthing + "");
 		if(recordList.size()==0)
 		{
 			System.out.println("\tNew cluster, creating : " + clusterKey + " : " + utmZone + " " + easting + " " + northing + " "  + year + " " + control + " " + tract + " " + subplot + " " +smallOrBig);
@@ -545,9 +552,9 @@ public class ImportDbf {
 		record.setCreationDate(new Date());
 		record.setStep(Step.ENTRY);
 		ArrayList<String> keys = new ArrayList<String>();
-		keys.add(utmZone);
-		keys.add(easting);
-		keys.add(northing);
+		keys.add(""+iutmZone);
+		keys.add(""+ieasting);
+		keys.add(""+inorthing);
 		record.setCreatedBy(user);
 		record.setModifiedBy(user);
 		record.setModifiedDate(new Date());
@@ -565,21 +572,29 @@ public class ImportDbf {
 		return result; 
 	}
 	
-	private void addDouble(Entity entity, String collectField, DBF dbfFile, String dbField) throws ArrayIndexOutOfBoundsException, xBaseJException {
-		String strValue = ((NumField) dbfFile.getField(dbField)).get().trim();
+	private void addDouble(Entity entity, String collectField, DBF dbfFile, String dbField)  {
+		String strValue = null;
+		try {
+			strValue = ((NumField) dbfFile.getField(dbField)).get().trim();
+		} catch (ArrayIndexOutOfBoundsException e) {
+		} catch (xBaseJException e) {
+		}
 		if("0".equals(strValue))
 		{
 			RealAttribute attr = entity.addValue(collectField, Double.parseDouble("0"));
 			//attr.getField(0).setSymbol('*');
 			//attr.getField(0).setRemarks("Zero value specified");
-			
 		} else if("".equals(strValue))
 		{	
 			RealAttribute attr = entity.addValue(collectField, (Double) null);
 			attr.getField(0).setSymbol('*');
 			attr.getField(0).setRemarks("Empty value specified");
+		}else if(strValue == null)
+		{
+			RealAttribute attr = entity.addValue(collectField, (Double) null);
+			attr.getField(0).setSymbol(Symbol.ILLEGIBLE);
 		}
-		else if(!"".equals(strValue))
+		else if(strValue != null)
 		{
 			entity.addValue(collectField, Double.parseDouble(strValue));
 		}
@@ -594,14 +609,28 @@ public class ImportDbf {
 
 
 
-	private void addInt(Entity entity, String collectField, DBF dbfFile, String dbField) throws NumberFormatException, ArrayIndexOutOfBoundsException, xBaseJException {
-		String strValue;
+	private void addInt(Entity entity, String collectField, DBF dbfFile, String dbField){
+		String strValue = null;
 		try 
 		{
 			strValue = ((NumField) dbfFile.getField(dbField)).get().trim();
 		}catch(ClassCastException ex)
 		{
-			strValue = ((CharField) dbfFile.getField(dbField)).get().trim(); // there are cases where the int value in DBFs are stored as text
+			try {
+				strValue = ((CharField) dbfFile.getField(dbField)).get().trim();
+			} catch (ArrayIndexOutOfBoundsException e) {
+				// TODO Auto-generated catch block
+				
+			} catch (xBaseJException e) {
+				// TODO Auto-generated catch block
+				
+			} // there are cases where the int value in DBFs are stored as text
+		} catch (ArrayIndexOutOfBoundsException e) {
+			// TODO Auto-generated catch block
+			
+		} catch (xBaseJException e) {
+			// TODO Auto-generated catch block
+			
 		}
 		
 		if("0".equals(strValue))
@@ -616,7 +645,7 @@ public class ImportDbf {
 			attr.getField(0).setSymbol('*');
 			attr.getField(0).setRemarks("Empty value specified");
 		}
-		else if(!"".equals(strValue))
+		else if(strValue != null)
 		{
 			entity.addValue(collectField, Integer.parseInt(strValue));
 		}
@@ -655,6 +684,8 @@ public class ImportDbf {
 		clearData(factoryDao.getJooqFactory());
 	}
 
+	
+	/*
 	// @Test
 	public void testImportSpecies() throws xBaseJException, IOException {
 		String provinces[] = { "species/region/irian.dbf",
@@ -821,6 +852,6 @@ public class ImportDbf {
 
 		}
 
-	}
+	}*/
 
 }
