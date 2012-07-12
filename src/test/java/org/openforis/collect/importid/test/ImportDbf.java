@@ -94,9 +94,9 @@ public class ImportDbf {
 	private UserManager userManager;
 
 	@Test
-	public void testImportCluster() throws IOException,
-			URISyntaxException {
-		URI uri = new URI("file:///E:/DBF/processing");//; ClassLoader.getSystemResource("cluster").toURI();
+	public void testImportCluster() throws IOException, URISyntaxException 
+	{
+		URI uri = new URI("file:///E:/DBF/processing");
 		File dir = new File(uri);
 
 		String[] children = dir.list();
@@ -533,7 +533,7 @@ public class ImportDbf {
 		CollectSurvey survey = surveyManager.get("idnfi");										
 		Entity cluster;
 		
-		List<CollectRecord> recordList = recordDao.loadSummaries(survey, "cluster", iutmZone + "", ieasting + "", inorthing + "");
+		List<CollectRecord> recordList = recordDao.loadSummaries(survey, "cluster", iutmZone + "", ieasting + "", inorthing + "", year);
 		if(recordList.size()==0)
 		{
 			System.out.println("\tNew cluster, creating : " + clusterKey + " : " + utmZone + " " + easting + " " + northing + " "  + year + " " + control + " " + tract + " " + subplot + " " +smallOrBig);
@@ -556,6 +556,7 @@ public class ImportDbf {
 		keys.add(""+iutmZone);
 		keys.add(""+ieasting);
 		keys.add(""+inorthing);
+		keys.add(""+year);
 		record.setCreatedBy(user);
 		record.setModifiedBy(user);
 		record.setModifiedDate(new Date());
