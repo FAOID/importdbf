@@ -613,6 +613,7 @@ public class ImportDbfTest {
 			cluster.addValue("easting", ieasting);
 			cluster.addValue("northing", inorthing);
 			cluster.addValue("year", safeInt(year));//this is new one, added by me, not in the tally sheet
+			cluster.addValue("description", dbf1.getName());
 		}else{
 			//System.out.println("Existing cluster, loading : " + clusterKey + " : " + utmZone + " " + easting + " " + northing + " "  + year + " " + control + " " + tract + " " + subplot + " " +smallOrBig);
 			record = recordDao.load(survey, recordList.get(0).getId(), 1);									
@@ -623,10 +624,11 @@ public class ImportDbfTest {
 		record.setCreationDate(new Date());
 		record.setStep(Step.ENTRY);
 		ArrayList<String> keys = new ArrayList<String>();
-		keys.add(utmZone+"");
-		keys.add(easting+"");
-		keys.add(northing+"");
+		keys.add(iutmZone+"");
+		keys.add(ieasting+"");
+		keys.add(inorthing+"");
 		keys.add(""+year);
+		keys.add(dbf1.getName());
 		record.setCreatedBy(user);
 		record.setModifiedBy(user);
 		record.setModifiedDate(new Date());
