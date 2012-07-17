@@ -195,10 +195,15 @@ public class ImportDbfTest {
 			permanent_plot_b.addValue("control", safeInt(control));
 			permanent_plot_b.addValue("hectare_plot", safeDouble(hectarePlot));//TOFIX : this should be integer! And the IDM should be updated too!
 			permanent_plot_b.addValue("record_unit", safeInt(recordUnit));
+			
 			if("0".equals(smallOrBig) || "1".equals(smallOrBig)) {
-				permanent_plot_b.addValue("largepart", Integer.parseInt(smallOrBig)); //large part
+				permanent_plot_b.addValue("largepart", safeInt(smallOrBig)); //large part
+				IntegerAttribute attr = permanent_plot_b.addValue("smallpart", (Integer) null);
+				attr.getField(0).setSymbol(FieldSymbol.BLANK_ON_FORM.getCode());
 			} else {
 				permanent_plot_b.addValue("smallpart", safeInt(smallOrBig));
+				IntegerAttribute attr = permanent_plot_b.addValue("largepart", (Integer) null);
+				attr.getField(0).setSymbol(FieldSymbol.BLANK_ON_FORM.getCode());
 			}
 			
 			addDouble(permanent_plot_b, "square_5x5", dbf1,"SQRSPB", true);
@@ -212,6 +217,9 @@ public class ImportDbfTest {
 			addDouble(number_of_records, "depth_of_peat_layer", dbf1, "PEATPB", true);
 			addDouble(number_of_records, "depth_of_litter", dbf1, "LITTERPB", true);
 			//non exist depth_of_peath and depth_of_humus in DBFs
+			addDouble(number_of_records, "depth_of_peath", dbf1, "xxx", true);
+			addDouble(number_of_records, "depth_of_humus", dbf1, "xxx", true);
+			
 			
 			Entity a_horizon = permanent_plot_b.addEntity("a_horizon");
 			addDouble(a_horizon, "depth", dbf1, "DEPA", true);
@@ -226,7 +234,16 @@ public class ImportDbfTest {
 			addInt(b_horizon, "colour", dbf1, "COLB", true);
 			addInt(b_horizon, "water_regime", dbf1, "WATB", true);
 			addInt(b_horizon, "texture", dbf1, "TEXB", true);
-			//skipping new / reenumeartion 50cm
+			
+			Entity fifty_cm= permanent_plot_b.addEntity("fifty_cm");
+			addInt(fifty_cm, "texture", dbf1, "TEXC", true);
+			addInt(fifty_cm, "colour", dbf1, "COLC", true);
+			addDouble(fifty_cm, "stones", dbf1, "STONC", true);
+			addInt(fifty_cm, "texture", dbf1, "TEXC", true);
+			
+			addInt(permanent_plot_b, "slope_position", dbf1, "SLOPEPOSPB", true);
+
+			
 			
 			addInt(permanent_plot_b, "c_horizon", dbf1, "HORC", true);
 			//skipping slope_position
@@ -288,8 +305,8 @@ public class ImportDbfTest {
 				}
 			}
 			
-			
-			if(record.getId() == null ) {
+			record.updateDerivedStates();
+			if(record.getId() == null ) {				
 				recordDao.insert(record);
 			} else {
 				recordDao.update(record);
@@ -415,6 +432,7 @@ public class ImportDbfTest {
 				}
 			}
 			
+			record.updateDerivedStates();
 			if(record.getId() == null ) {
 				recordDao.insert(record);
 			} else {
@@ -468,10 +486,16 @@ public class ImportDbfTest {
 			nf.addValue("subplot_no", safeInt(subplot));
 			
 			if("0".equals(smallOrBig) || "1".equals(smallOrBig)) {
-				nf.addValue("largepart", safeInt(smallOrBig)); //large part 
+				nf.addValue("largepart", safeInt(smallOrBig)); //large part
+				IntegerAttribute attr = nf.addValue("smallpart", (Integer) null);
+				attr.getField(0).setSymbol(FieldSymbol.BLANK_ON_FORM.getCode());
 			} else {
-				nf.addValue("smallpart", safeInt(smallOrBig));//small part
+				nf.addValue("smallpart", safeInt(smallOrBig));
+				IntegerAttribute attr = nf.addValue("largepart", (Integer) null);
+				attr.getField(0).setSymbol(FieldSymbol.BLANK_ON_FORM.getCode());
 			}
+			
+			
 			
 			//do this by the contents of the old foxpro fields
 			addDouble(nf, "sector", dbf1, "SECTOR", true);
@@ -570,6 +594,7 @@ public class ImportDbfTest {
 				}
 			}
 			
+			record.updateDerivedStates();
 			if(record.getId() == null ) {
 				recordDao.insert(record);
 			} else {
@@ -650,7 +675,7 @@ public class ImportDbfTest {
 	}
 	
 	private void addDouble(Entity entity, String collectField, DBF dbfFile, String dbField, boolean useStarWhenEmpty)  {
-		String strValue="0";
+		String strValue=null;
 		try {
 			strValue = ((NumField) dbfFile.getField(dbField)).get().trim();
 			
@@ -659,34 +684,41 @@ public class ImportDbfTest {
 			try {
 				strValue = ((CharField) dbfFile.getField(dbField)).get().trim();
 			} catch (ArrayIndexOutOfBoundsException e) {
-				// TODO Auto-generated catch block
 				System.out.println("\t\t" + e.getMessage());
 			} catch (xBaseJException e) {
-				// TODO Auto-generated catch block
-				if(!e.getMessage().startsWith("Field not found")) System.out.println("\t\t" + e.getMessage());
+				if(!e.getMessage().startsWith("Field not found")){
+					System.out.println("\t\t" + e.getMessage());
+				}else{
+					RealAttribute attr = entity.addValue(collectField, (Double) null);
+					attr.getField(0).setSymbol(FieldSymbol.ILLEGIBLE.getCode());
+					return;
+				}
 			}
 		} catch (ArrayIndexOutOfBoundsException e) {
-			// TODO Auto-generated catch block
 			System.out.println("\t\t" + e.getMessage());
 		} catch (xBaseJException e) {
-			// TODO Auto-generated catch block
-			//e.printStackTrace();
-			if(!e.getMessage().startsWith("Field not found")) System.out.println("\t\t" + e.getMessage());
+			if(!e.getMessage().startsWith("Field not found")){
+				System.out.println("\t\t" + e.getMessage());
+			}else{
+				RealAttribute attr = entity.addValue(collectField, (Double) null);
+				attr.getField(0).setSymbol(FieldSymbol.ILLEGIBLE.getCode());
+				return;
+			}
 		}
 		
+	
 		if("0".equals(strValue) || "".equals(strValue))
 		{			
 			RealAttribute attr;
 			if(useStarWhenEmpty)
 			{
-				attr = entity.addValue(collectField, (Double) null);				
-				attr.getField(0).clear();
+				attr = entity.addValue(collectField, (Double) null);
 				attr.getField(0).setSymbol(FieldSymbol.BLANK_ON_FORM.getCode());
 			}else{
 				attr = entity.addValue(collectField, safeDouble("0"));
 			}
 		} 
-		else if(!"".equals(strValue))
+		else
 		{
 			try { 
 				entity.addValue(collectField, safeDouble(strValue));
@@ -718,44 +750,50 @@ public class ImportDbfTest {
 
 
 	private void addInt(Entity entity, String collectField, DBF dbfFile, String dbField, boolean useStarWhenEmpty) {
-		String strValue="666";
-		try 
-		{
+		String strValue=null;
+		try {
 			strValue = ((NumField) dbfFile.getField(dbField)).get().trim();
+			
 		}catch(ClassCastException ex)
 		{
 			try {
 				strValue = ((CharField) dbfFile.getField(dbField)).get().trim();
 			} catch (ArrayIndexOutOfBoundsException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				System.out.println("\t\t" + e.getMessage());
 			} catch (xBaseJException e) {
-				// TODO Auto-generated catch block
-				//e.printStackTrace();
-				if(!e.getMessage().startsWith("Field not found")) System.out.println("\t\t" + e.getMessage());
-			} // there are cases where the int value in DBFs are stored as text
+				if(!e.getMessage().startsWith("Field not found")){
+					System.out.println("\t\t" + e.getMessage());
+				}else{
+					IntegerAttribute attr = entity.addValue(collectField, (Integer) null);
+					attr.getField(0).setSymbol(FieldSymbol.ILLEGIBLE.getCode());
+					return;
+				}
+			}
 		} catch (ArrayIndexOutOfBoundsException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println("\t\t" + e.getMessage());
 		} catch (xBaseJException e) {
-			// TODO Auto-generated catch block
-			//e.printStackTrace();
-			if(!e.getMessage().startsWith("Field not found")) System.out.println("\t\t" + e.getMessage());
+			if(!e.getMessage().startsWith("Field not found")){
+				System.out.println("\t\t" + e.getMessage());
+			}else{
+				IntegerAttribute attr = entity.addValue(collectField, (Integer) null);
+				attr.getField(0).setSymbol(FieldSymbol.ILLEGIBLE.getCode());
+				return;
+			}
 		}
 		
+	
 		if("0".equals(strValue) || "".equals(strValue))
 		{			
 			IntegerAttribute attr;
 			if(useStarWhenEmpty)
 			{
-				attr = entity.addValue(collectField, (Integer) null);				
-				attr.getField(0).clear();
+				attr = entity.addValue(collectField, (Integer) null);
 				attr.getField(0).setSymbol(FieldSymbol.BLANK_ON_FORM.getCode());
 			}else{
 				attr = entity.addValue(collectField, safeInt("0"));
 			}
 		} 
-		else if(!"".equals(strValue))
+		else
 		{
 			try { 
 				entity.addValue(collectField, safeInt(strValue));
