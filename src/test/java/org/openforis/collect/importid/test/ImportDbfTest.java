@@ -96,8 +96,7 @@ public class ImportDbfTest {
 	private UserManager userManager;
 
 	@Test
-	public void testImportCluster() throws IOException,
-			URISyntaxException {
+	public void testImportCluster() throws Exception {
 		URI uri = new URI("file:///C:/DBF/processing");
 		File dir = new File(uri);
 
@@ -119,10 +118,10 @@ public class ImportDbfTest {
 			}
 		};
 		
-		User user = userManager.loadByUserName("eko");
-		
+		User user = userManager.loadByUserName("reenumeration");
+		if(user==null) throw new Exception("User not exist");
 		DialectAwareJooqFactory jf = factoryDao.getJooqFactory();
-		jf.delete(OFC_RECORD).where(OFC_RECORD.CREATED_BY_ID.equal(user.getId())).execute();
+		//jf.delete(OFC_RECORD).where(OFC_RECORD.CREATED_BY_ID.equal(user.getId())).execute();
 		
 		
 		File[] files = dir.listFiles(fileFilter);
@@ -840,7 +839,7 @@ public class ImportDbfTest {
 
 	private String generateLoggingYear(String twoDigitYear) {
 		twoDigitYear = twoDigitYear.trim();
-		if(!"0".equals(twoDigitYear))
+		if(!"0".equals(twoDigitYear) || !"".equals(twoDigitYear))
 			return generateYear(twoDigitYear);
 		return twoDigitYear;
 	}
