@@ -98,7 +98,7 @@ public class ImportDbfTest {
 	@Test
 	public void testImportCluster() throws IOException,
 			URISyntaxException {
-		URI uri = new URI("file:///E:/DBF/processing");
+		URI uri = new URI("file:///C:/DBF/processing");
 		File dir = new File(uri);
 
 		String[] children = dir.list();
