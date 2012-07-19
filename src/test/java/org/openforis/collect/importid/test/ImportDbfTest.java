@@ -121,7 +121,7 @@ public class ImportDbfTest {
 		User user = userManager.loadByUserName("reenumeration");
 		if(user==null) throw new Exception("User not exist");
 		DialectAwareJooqFactory jf = factoryDao.getJooqFactory();
-		//jf.delete(OFC_RECORD).where(OFC_RECORD.CREATED_BY_ID.equal(user.getId())).execute();
+		jf.delete(OFC_RECORD).where(OFC_RECORD.CREATED_BY_ID.equal(user.getId())).execute();
 		
 		
 		File[] files = dir.listFiles(fileFilter);
@@ -191,16 +191,16 @@ public class ImportDbfTest {
 			addDouble(permanent_plot_b, "segment_dist", dbf1, "DISTPB", true);
 			
 			//keys for permanent plot a
-			permanent_plot_b.addValue("control", safeInt(control));
-			permanent_plot_b.addValue("hectare_plot", safeDouble(hectarePlot));//TOFIX : this should be integer! And the IDM should be updated too!
-			permanent_plot_b.addValue("record_unit", safeInt(recordUnit));
+			addIntegerLoose(permanent_plot_b,"control", control);
+			addDoubleLoose(permanent_plot_b,"hectare_plot", hectarePlot);//TOFIX : this should be integer! And the IDM should be updated too!
+			addIntegerLoose(permanent_plot_b,"record_unit", recordUnit);
 			
 			if("0".equals(smallOrBig) || "1".equals(smallOrBig)) {
-				permanent_plot_b.addValue("largepart", safeInt(smallOrBig)); //large part
+				addIntegerLoose(permanent_plot_b,"largepart", smallOrBig); //large part
 				IntegerAttribute attr = permanent_plot_b.addValue("smallpart", (Integer) null);
 				attr.getField(0).setSymbol(FieldSymbol.BLANK_ON_FORM.getCode());
 			} else {
-				permanent_plot_b.addValue("smallpart", safeInt(smallOrBig));
+				addIntegerLoose(permanent_plot_b,"smallpart", smallOrBig);
 				IntegerAttribute attr = permanent_plot_b.addValue("largepart", (Integer) null);
 				attr.getField(0).setSymbol(FieldSymbol.BLANK_ON_FORM.getCode());
 			}
@@ -345,15 +345,15 @@ public class ImportDbfTest {
 			addDouble(permanent_plot_a, "segment_dist", dbf1, "DISTANCE", true);
 			
 			//keys for permanent plot a
-			permanent_plot_a.addValue("control", safeInt(control));
-			permanent_plot_a.addValue("hectare_plot", safeDouble(hectarePlot));//TOFIX : this should be integer! And the IDM should be updated too!
-			permanent_plot_a.addValue("record_unit", safeInt(recordUnit));
+			addIntegerLoose(permanent_plot_a,"control", control);
+			addDoubleLoose(permanent_plot_a, "hectare_plot", hectarePlot);//TOFIX : this should be integer! And the IDM should be updated too!
+			addIntegerLoose(permanent_plot_a,"record_unit", recordUnit);
 			if("0".equals(smallOrBig) || "1".equals(smallOrBig)) {
-				permanent_plot_a.addValue("largepart", safeInt(smallOrBig)); //large part
+				addIntegerLoose(permanent_plot_a,"largepart",smallOrBig); //large part
 				IntegerAttribute attr = permanent_plot_a.addValue("smallpart", (Integer) null);
 				attr.getField(0).setSymbol(FieldSymbol.BLANK_ON_FORM.getCode());
 			} else {
-				permanent_plot_a.addValue("smallpart", safeInt(smallOrBig));
+				addIntegerLoose(permanent_plot_a,"smallpart", smallOrBig);
 				IntegerAttribute attr = permanent_plot_a.addValue("largepart", (Integer) null);
 				attr.getField(0).setSymbol(FieldSymbol.BLANK_ON_FORM.getCode());
 			}
@@ -367,15 +367,14 @@ public class ImportDbfTest {
 			addCode(permanent_plot_a,"stand_condition",dbf1,"STAND");
 			
 			String yrlog = dbf1.getField("YRLOG").get();
-			permanent_plot_a.addValue("logging_year", safeInt(generateLoggingYear(yrlog)));
-			//addInt(permanent_plot_a,"logging_year", dbf1, "YRLOG");
+			addIntegerLoose(permanent_plot_a,"logging_year", generateLoggingYear(yrlog));
 			addCode(permanent_plot_a,"terrain",dbf1,"TERRAIN");
 			addCode(permanent_plot_a,"slope",dbf1,"SLOPE");
 			addCode(permanent_plot_a,"aspect",dbf1,"ASPECT");
 			addInt(permanent_plot_a, "tp_recorded", dbf1, "NOTREES", true);
 			addInt(permanent_plot_a, "crew_no", dbf1, "CREWNO", true);
 			addCode(permanent_plot_a,"month",dbf1, "MONTHIN");
-			permanent_plot_a.addValue("year", safeInt(year));
+			addIntegerLoose(permanent_plot_a,"year", year);
 			
 			DBF dbf2 = getDbf(folderPath.getPath() + "\\" + "RT6(46).DBF");
 			if(dbf2!=null)
@@ -728,6 +727,48 @@ public class ImportDbfTest {
 			}
 		}
 	}
+	
+	private void addDoubleLoose(Entity entity, String collectField,String strValue)  {
+		if("".equals(strValue))//"0".equals(strValue) || 
+		{			
+			RealAttribute attr;
+			attr = entity.addValue(collectField, (Double) null);
+			attr.getField(0).setSymbol(FieldSymbol.BLANK_ON_FORM.getCode());
+		} 
+		else
+		{
+			try { 
+				entity.addValue(collectField, safeDouble(strValue));
+			} catch (Exception e)
+			{
+				e.printStackTrace();
+				RealAttribute attr;
+				attr = entity.addValue(collectField, (Double) null);
+				attr.getField(0).setSymbol(FieldSymbol.ILLEGIBLE.getCode());
+			}
+		}
+	}
+	
+	private void addIntegerLoose(Entity entity, String collectField,String strValue)  {
+		if("".equals(strValue))//"0".equals(strValue) || 
+		{			
+			IntegerAttribute attr;
+			attr = entity.addValue(collectField, (Integer) null);
+			attr.getField(0).setSymbol(FieldSymbol.BLANK_ON_FORM.getCode());
+		} 
+		else
+		{
+			try { 
+				entity.addValue(collectField, safeInt(strValue));
+			} catch (Exception e)
+			{
+				e.printStackTrace();
+				IntegerAttribute attr;
+				attr = entity.addValue(collectField, (Integer) null);
+				attr.getField(0).setSymbol(FieldSymbol.ILLEGIBLE.getCode());
+			}
+		}
+	}
 
 
 
@@ -823,15 +864,16 @@ public class ImportDbfTest {
 	}
 
 	
-	private double safeDouble(String string) {
-		// TODO Auto-generated method stub
-	try{
-			return Double.parseDouble(string.trim());
-		}catch(Exception e){
-			e.printStackTrace();
-			return 666.0;
-		}
-		
+	private double safeDouble(String strValue) 
+	{
+		strValue = strValue.trim();
+		try{
+			if("".equals(strValue)) return 0.0;
+			return Double.parseDouble(strValue.replaceAll(",", "."));
+		}catch(NumberFormatException e){
+			System.out.println("safeDouble " + strValue);
+			return 0.0;
+		}		
 	}
 
 
@@ -902,12 +944,14 @@ public class ImportDbfTest {
 		Assert.assertEquals("2007", generateYear("7"));
 	}
 
-	private int safeInt(String twoDigitYear) {
-		try{			
-			return Integer.parseInt(twoDigitYear.trim());
+	private int safeInt(String strValue) {
+		strValue = strValue.trim();
+		try{
+			if("".equals(strValue)) return 0;
+			return Integer.parseInt(strValue.replaceAll(",", "."));
 		}catch(Exception e){
-			e.printStackTrace();
-			return 666;
+			System.out.println("safeInt : " + strValue);
+			return 0;
 		}
 	}
 	
