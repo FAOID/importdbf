@@ -176,7 +176,7 @@ public class ImportDbfTest {
 			dbf1.read();
 			
 			HashMap<String, Object> result = prepareCluster(dbf1, user);
-			if(result==null) continue;
+			if(result==null) return;
 			Entity cluster = (Entity) result.get("cluster");
 			String hectarePlot = (String) result.get("tract");//for plat A, tract is hectare plot
 			String recordUnit = (String) result.get("subplot");//record unit
@@ -323,12 +323,8 @@ public class ImportDbfTest {
 		if(dbf1==null) return;
 		for (int i = 1; i <= dbf1.getRecordCount(); i++) {
 			dbf1.read();
-			
 			HashMap<String, Object> result= prepareCluster(dbf1, user);
-			if(result==null){
-				//System.out.println("prepclust error");
-				continue;
-			}
+			if(result==null) return;
 			Entity cluster = (Entity) result.get("cluster");
 			String hectarePlot = (String) result.get("tract");//for plat A, tract is hectare plot
 			String recordUnit = (String) result.get("subplot");//record unit
@@ -449,8 +445,13 @@ public class ImportDbfTest {
 			result  = new DBF(filePath);
 			return result;
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			if(e.getMessage().startsWith("Unknown database file"))
+			{
+				System.out.println("\t\t..Inexist file " + filePath);
+			}else
+			{
+				e.printStackTrace();
+			}
 		} 
 		return null;
 	}
@@ -466,7 +467,7 @@ public class ImportDbfTest {
 			dbf1.read();
 			
 			HashMap<String, Object> result = prepareCluster(dbf1, user);
-			if(result==null)continue;
+			if(result==null) return;
 			Entity cluster = (Entity) result.get("cluster");
 			String tract = (String) result.get("tract");
 			String subplot = (String) result.get("subplot");
@@ -475,6 +476,7 @@ public class ImportDbfTest {
 			String clusterKey = (String) result.get("clusterKey");
 			CollectRecord record = (CollectRecord) result.get("record");
 			String smallOrBig = (String) result.get("smallOrBig");
+			
 			
 			
 			
@@ -499,6 +501,8 @@ public class ImportDbfTest {
 			addDouble(nf, "sector", dbf1, "SECTOR", true);
 			addDouble(nf, "segment_dist", dbf1, "DISTANCE", true);
 			
+			addIntegerLoose(nf, "permanent", "");//permanent is always blank
+			addIntegerLoose(nf, "record_type", "");//record type is also blanked, no need to store this. Will be deleted
 			nf.addValue("control", safeInt(control));
 			
 			//?Square
@@ -607,66 +611,78 @@ public class ImportDbfTest {
 		HashMap<String, Object> result = new HashMap<String, Object>(); 
 		CollectRecord record;
 		try{
-		CharField fldKey = (CharField) dbf1.getField("KEY");
-		String clusterKey = fldKey.get().toString();					
-		String utmZone = clusterKey.substring(0,2);
-		String easting = clusterKey.substring(2,5);
-		String northing = clusterKey.substring(5,9);
-		String year = generateYear(clusterKey.substring(9, 11));
-		String control = clusterKey.substring(11,12);
-		String tract = clusterKey.substring(12, 13);
-		String subplot = clusterKey.substring(13, 15);
-		String smallOrBig = clusterKey.substring(15, 16);
-		
-		int iutmZone = safeInt(utmZone);
-		int ieasting = safeInt(easting);
-		int inorthing = safeInt(northing);
-		
-		
-		CollectSurvey survey = surveyManager.get("idnfi");										
-		Entity cluster;
-		
-		List<CollectRecord> recordList = recordDao.loadSummaries(survey, "cluster", iutmZone + "", ieasting + "", inorthing + "", year);
-		if(recordList.size()==0)
-		{
-			System.out.println("\t\tNew cluster, creating : " + clusterKey + " : " + utmZone + " " + easting + " " + northing + " "  + year + " " + control + " " + tract + " " + subplot + " " +smallOrBig);
-			record = new CollectRecord(survey, "1.0");
-			cluster = record.createRootEntity("cluster");
-			cluster.addValue("utm_zone", iutmZone);
-			cluster.addValue("easting", ieasting);
-			cluster.addValue("northing", inorthing);
-			cluster.addValue("year", safeInt(year));//this is new one, added by me, not in the tally sheet
-			cluster.addValue("description", dbf1.getName());
-		}else{
-			//System.out.println("Existing cluster, loading : " + clusterKey + " : " + utmZone + " " + easting + " " + northing + " "  + year + " " + control + " " + tract + " " + subplot + " " +smallOrBig);
-			record = recordDao.load(survey, recordList.get(0).getId(), 1);									
-			cluster = record.getRootEntity();
-			Assert.assertNotNull(cluster);
-		}
-		
-		record.setCreationDate(new Date());
-		record.setStep(Step.ENTRY);
-		ArrayList<String> keys = new ArrayList<String>();
-		keys.add(iutmZone+"");
-		keys.add(ieasting+"");
-		keys.add(inorthing+"");
-		keys.add(""+year);
-		keys.add(dbf1.getName());
-		record.setCreatedBy(user);
-		record.setModifiedBy(user);
-		record.setModifiedDate(new Date());
-		record.setRootEntityKeyValues(keys);
-		
-		result.put("cluster", cluster);
-		result.put("tract", tract);
-		result.put("subplot", subplot);
-		result.put("control", control);
-		result.put("year", year);
-		result.put("clusterKey", clusterKey);
-		result.put("record", record);
-		result.put("smallOrBig", smallOrBig);
+			CharField fldKey = (CharField) dbf1.getField("KEY");
+			String clusterKey = fldKey.get().toString();
+			
+			double iclusterkey;
+			try 
+			{
+				iclusterkey = Double.parseDouble(clusterKey);
+			}catch(NumberFormatException ex)
+			{
+				System.out.println("\t\t..error preparing cluster :" + clusterKey);
+				return null;
+			}
+			
+			String utmZone = clusterKey.substring(0,2);
+			String easting = clusterKey.substring(2,5);
+			String northing = clusterKey.substring(5,9);
+			String year = generateYear(clusterKey.substring(9, 11));
+			String control = clusterKey.substring(11,12);
+			String tract = clusterKey.substring(12, 13);
+			String subplot = clusterKey.substring(13, 15);
+			String smallOrBig = clusterKey.substring(15, 16);
+			
+			int iutmZone = safeInt(utmZone);
+			int ieasting = safeInt(easting);
+			int inorthing = safeInt(northing);
+			
+			
+			CollectSurvey survey = surveyManager.get("idnfi");										
+			Entity cluster;
+			
+			List<CollectRecord> recordList = recordDao.loadSummaries(survey, "cluster", iutmZone + "", ieasting + "", inorthing + "", year);
+			if(recordList.size()==0)
+			{
+				System.out.println("\t\tNew cluster, creating : " + clusterKey + " : " + utmZone + " " + easting + " " + northing + " "  + year + " " + control + " " + tract + " " + subplot + " " +smallOrBig);
+				record = new CollectRecord(survey, "1.0");
+				cluster = record.createRootEntity("cluster");
+				cluster.addValue("utm_zone", iutmZone);
+				cluster.addValue("easting", ieasting);
+				cluster.addValue("northing", inorthing);
+				cluster.addValue("year", safeInt(year));//this is new one, added by me, not in the tally sheet
+				cluster.addValue("description", dbf1.getName());
+			}else{
+				//System.out.println("Existing cluster, loading : " + clusterKey + " : " + utmZone + " " + easting + " " + northing + " "  + year + " " + control + " " + tract + " " + subplot + " " +smallOrBig);
+				record = recordDao.load(survey, recordList.get(0).getId(), 1);									
+				cluster = record.getRootEntity();
+				Assert.assertNotNull(cluster);
+			}
+			
+			record.setCreationDate(new Date());
+			record.setStep(Step.ENTRY);
+			ArrayList<String> keys = new ArrayList<String>();
+			keys.add(iutmZone+"");
+			keys.add(ieasting+"");
+			keys.add(inorthing+"");
+			keys.add(""+year);
+			keys.add(dbf1.getName());
+			record.setCreatedBy(user);
+			record.setModifiedBy(user);
+			record.setModifiedDate(new Date());
+			record.setRootEntityKeyValues(keys);
+			
+			result.put("cluster", cluster);
+			result.put("tract", tract);
+			result.put("subplot", subplot);
+			result.put("control", control);
+			result.put("year", year);
+			result.put("clusterKey", clusterKey);
+			result.put("record", record);
+			result.put("smallOrBig", smallOrBig);
 		}catch(Exception e){
-			e.printStackTrace();
+			System.out.println("\t\t..Cluster preparation error");
+			//e.printStackTrace();			
 			return null;
 		}
 		return result; 
@@ -871,7 +887,7 @@ public class ImportDbfTest {
 			if("".equals(strValue)) return 0.0;
 			return Double.parseDouble(strValue.replaceAll(",", "."));
 		}catch(NumberFormatException e){
-			System.out.println("safeDouble " + strValue);
+			System.out.println("\t\t..safeDouble " + strValue);
 			return 0.0;
 		}		
 	}
@@ -950,7 +966,7 @@ public class ImportDbfTest {
 			if("".equals(strValue)) return 0;
 			return Integer.parseInt(strValue.replaceAll(",", "."));
 		}catch(Exception e){
-			System.out.println("safeInt : " + strValue);
+			System.out.println("\t\t..safeInt : " + strValue);
 			return 0;
 		}
 	}
