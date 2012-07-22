@@ -121,7 +121,7 @@ public class ImportDbfTest {
 		User user = userManager.loadByUserName("reenumeration");
 		if(user==null) throw new Exception("User not exist");
 		DialectAwareJooqFactory jf = factoryDao.getJooqFactory();
-		jf.delete(OFC_RECORD).where(OFC_RECORD.CREATED_BY_ID.equal(user.getId())).execute();
+		//jf.delete(OFC_RECORD).where(OFC_RECORD.CREATED_BY_ID.equal(user.getId())).execute();
 		
 		
 		File[] files = dir.listFiles(fileFilter);
