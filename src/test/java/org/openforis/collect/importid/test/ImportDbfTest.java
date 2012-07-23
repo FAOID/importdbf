@@ -445,7 +445,7 @@ public class ImportDbfTest {
 			result  = new DBF(filePath);
 			return result;
 		} catch (Exception e) {
-			if(e.getMessage().startsWith("Unknown database file"))
+			if(e.getMessage() != null && e.getMessage().startsWith("Unknown database file"))
 			{
 				System.out.println("\t\t..Inexist file " + filePath);
 			}else
@@ -700,7 +700,7 @@ public class ImportDbfTest {
 			} catch (ArrayIndexOutOfBoundsException e) {
 				System.out.println("\t\t" + e.getMessage());
 			} catch (xBaseJException e) {
-				if(!e.getMessage().startsWith("Field not found")){
+				if(e.getMessage() != null && !e.getMessage().startsWith("Field not found")){
 					System.out.println("\t\t" + e.getMessage());
 				}else{
 					RealAttribute attr = entity.addValue(collectField, (Double) null);
@@ -711,7 +711,7 @@ public class ImportDbfTest {
 		} catch (ArrayIndexOutOfBoundsException e) {
 			System.out.println("\t\t" + e.getMessage());
 		} catch (xBaseJException e) {
-			if(!e.getMessage().startsWith("Field not found")){
+			if(e.getMessage() != null && !e.getMessage().startsWith("Field not found")){
 				System.out.println("\t\t" + e.getMessage());
 			}else{
 				RealAttribute attr = entity.addValue(collectField, (Double) null);
@@ -798,7 +798,7 @@ public class ImportDbfTest {
 		} catch (xBaseJException e) {
 			// TODO Auto-generated catch block
 			//e.printStackTrace();
-			if(!e.getMessage().startsWith("Field not found")) System.out.println("\t\t" + e.getMessage());
+			if(e.getMessage() != null && !e.getMessage().startsWith("Field not found")) System.out.println("\t\t" + e.getMessage());
 		}
 		entity.addValue(collectField, strValue);
 	}
@@ -817,7 +817,7 @@ public class ImportDbfTest {
 			} catch (ArrayIndexOutOfBoundsException e) {
 				System.out.println("\t\t" + e.getMessage());
 			} catch (xBaseJException e) {
-				if(!e.getMessage().startsWith("Field not found")){
+				if(e.getMessage() != null && !e.getMessage().startsWith("Field not found")){
 					System.out.println("\t\t" + e.getMessage());
 				}else{
 					IntegerAttribute attr = entity.addValue(collectField, (Integer) null);
@@ -828,7 +828,7 @@ public class ImportDbfTest {
 		} catch (ArrayIndexOutOfBoundsException e) {
 			System.out.println("\t\t" + e.getMessage());
 		} catch (xBaseJException e) {
-			if(!e.getMessage().startsWith("Field not found")){
+			if(e.getMessage() != null && !e.getMessage().startsWith("Field not found")){
 				System.out.println("\t\t" + e.getMessage());
 			}else{
 				IntegerAttribute attr = entity.addValue(collectField, (Integer) null);
@@ -871,7 +871,7 @@ public class ImportDbfTest {
 		} catch (xBaseJException e) {
 			// TODO Auto-generated catch block
 			//e.printStackTrace();
-			if(!e.getMessage().startsWith("Field not found")) System.out.println("\t\t" + e.getMessage());
+			if(e.getMessage() != null && !e.getMessage().startsWith("Field not found")) System.out.println("\t\t" + e.getMessage());
 		}
 		if(!"".equals(strValue))
 		{
