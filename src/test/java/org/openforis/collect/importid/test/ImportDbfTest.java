@@ -1,5 +1,6 @@
 package org.openforis.collect.importid.test;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FilenameFilter;
@@ -187,8 +188,8 @@ public class ImportDbfTest {
 			CollectRecord record = (CollectRecord) result.get("record");
 			
 			Entity permanent_plot_b = cluster.addEntity("permanent_plot_b");
-			addDouble(permanent_plot_b, "sector", dbf1, "SECTPB", true);
-			addDouble(permanent_plot_b, "segment_dist", dbf1, "DISTPB", true);
+			addDouble(permanent_plot_b, "sector", dbf1, "SECTPB", true, 0);
+			addDouble(permanent_plot_b, "segment_dist", dbf1, "DISTPB", true, 0);
 			
 			//keys for permanent plot a
 			addIntegerLoose(permanent_plot_b,"control", control);
@@ -205,31 +206,31 @@ public class ImportDbfTest {
 				attr.getField(0).setSymbol(FieldSymbol.BLANK_ON_FORM.getCode());
 			}
 			
-			addDouble(permanent_plot_b, "square_5x5", dbf1,"SQRSPB", true);
+			addDouble(permanent_plot_b, "square_5x5", dbf1,"SQRSPB", true, 0);
 			
 			Entity number_of_records = permanent_plot_b.addEntity("number_of_records");
 			addInt(number_of_records, "seedlings", dbf1, "SEEDNOPB", true);
 			addInt(number_of_records, "saplings", dbf1, "SAPNOPB", true);
-			addDouble(number_of_records, "rattan_less_than2point9m", dbf1, "RAT1PB", true);//TOFIX : should be int??/
-			addDouble(number_of_records, "rattan_more_than3point0m", dbf1, "RAT2PB", true);
-			addDouble(number_of_records, "bamboo", dbf1, "BAMPB", true);
-			addDouble(number_of_records, "depth_of_peat_layer", dbf1, "PEATPB", true);
-			addDouble(number_of_records, "depth_of_litter", dbf1, "LITTERPB", true);
+			addDouble(number_of_records, "rattan_less_than2point9m", dbf1, "RAT1PB", true, 0);//TOFIX : should be int??/
+			addDouble(number_of_records, "rattan_more_than3point0m", dbf1, "RAT2PB", true, 0);
+			addDouble(number_of_records, "bamboo", dbf1, "BAMPB", true, 0);
+			addDouble(number_of_records, "depth_of_peat_layer", dbf1, "PEATPB", true, 0);
+			addDouble(number_of_records, "depth_of_litter", dbf1, "LITTERPB", true, 0);
 			//non exist depth_of_peath and depth_of_humus in DBFs
-			addDouble(number_of_records, "depth_of_peath", dbf1, "xxx", true);
-			addDouble(number_of_records, "depth_of_humus", dbf1, "xxx", true);
+			addDouble(number_of_records, "depth_of_peath", dbf1, "xxx", true, 0);
+			addDouble(number_of_records, "depth_of_humus", dbf1, "xxx", true, 0);
 			
 			
 			Entity a_horizon = permanent_plot_b.addEntity("a_horizon");
-			addDouble(a_horizon, "depth", dbf1, "DEPA", true);
-			addDouble(a_horizon, "stones", dbf1, "STONA", true);
+			addDouble(a_horizon, "depth", dbf1, "DEPA", true, 0);
+			addDouble(a_horizon, "stones", dbf1, "STONA", true, 0);
 			addInt(a_horizon, "colour", dbf1, "COLA", true);
 			addInt(a_horizon, "water_regime", dbf1, "WATA", true);
 			addInt(a_horizon, "texture", dbf1, "TEXA", true);
 			
 			Entity b_horizon= permanent_plot_b.addEntity("b_horizon");
-			addDouble(b_horizon, "depth", dbf1, "DEPB", true);
-			addDouble(b_horizon, "stones", dbf1, "STONB", true);
+			addDouble(b_horizon, "depth", dbf1, "DEPB", true, 0);
+			addDouble(b_horizon, "stones", dbf1, "STONB", true, 0);
 			addInt(b_horizon, "colour", dbf1, "COLB", true);
 			addInt(b_horizon, "water_regime", dbf1, "WATB", true);
 			addInt(b_horizon, "texture", dbf1, "TEXB", true);
@@ -237,7 +238,7 @@ public class ImportDbfTest {
 			Entity fifty_cm= permanent_plot_b.addEntity("fifty_cm");
 			addInt(fifty_cm, "texture", dbf1, "TEXC", true);
 			addInt(fifty_cm, "colour", dbf1, "COLC", true);
-			addDouble(fifty_cm, "stones", dbf1, "STONC", true);
+			addDouble(fifty_cm, "stones", dbf1, "STONC", true, 0);
 			addInt(fifty_cm, "texture", dbf1, "TEXC", true);
 			
 			addInt(permanent_plot_b, "slope_position", dbf1, "SLOPEPOSPB", true);
@@ -271,12 +272,12 @@ public class ImportDbfTest {
 						Entity rattan_gte_3m = plotb_ssr.addEntity("rattan_gte_3m");
 						Entity s_single = rattan_gte_3m.addEntity("s_single");
 						addInt(s_single, "stems", dbf2, "RAT2NOP", true);
-						addDouble(s_single, "d_max", dbf2, "RAT2DMXP", true);
+						addDouble(s_single, "d_max", dbf2, "RAT2DMXP", true, 0);
 						
 						Entity c_cluster = rattan_gte_3m.addEntity("c_cluster");
-						addDouble(c_cluster,"d_min",dbf2,"RAT2DMNP", true);
-						addDouble(c_cluster,"d_avg",dbf2,"RAT2DAVP", true);
-						addDouble(c_cluster,"l_avg",dbf2,"RAT2LP", true);							
+						addDouble(c_cluster,"d_min",dbf2,"RAT2DMNP", true, 0);
+						addDouble(c_cluster,"d_avg",dbf2,"RAT2DAVP", true, 0);
+						addDouble(c_cluster,"l_avg",dbf2,"RAT2LP", true, 0);							
 					}
 				}
 			}
@@ -299,7 +300,7 @@ public class ImportDbfTest {
 						addInt(no_culm,"live_stumps", dbf3, "LVSTMPB", true);
 						
 						addInt(bamboo, "azimuth_to_bamboo", dbf3, "AZMPB", true);
-						addDouble(bamboo, "horizontal_distance_to_bamboo", dbf3, "DISTPB", true);	
+						addDouble(bamboo, "horizontal_distance_to_bamboo", dbf3, "DISTPB", true, 0);	
 					}
 				}
 			}
@@ -337,8 +338,8 @@ public class ImportDbfTest {
 			
 			Entity permanent_plot_a = cluster.addEntity("permanent_plot_a");
 			
-			addDouble(permanent_plot_a, "sector", dbf1, "SECTOR", true);
-			addDouble(permanent_plot_a, "segment_dist", dbf1, "DISTANCE", true);
+			addDouble(permanent_plot_a, "sector", dbf1, "SECTOR", true, 0);
+			addDouble(permanent_plot_a, "segment_dist", dbf1, "DISTANCE", true, 0);
 			
 			//keys for permanent plot a
 			addIntegerLoose(permanent_plot_a,"control", control);
@@ -354,7 +355,7 @@ public class ImportDbfTest {
 				attr.getField(0).setSymbol(FieldSymbol.BLANK_ON_FORM.getCode());
 			}
 			
-			addDouble(permanent_plot_a, "square_5x3", dbf1,"SQUARES", true);
+			addDouble(permanent_plot_a, "square_5x3", dbf1,"SQUARES", true, 0);
 			addCode(permanent_plot_a,"province",dbf1,"PROVINCE");
 			addCode(permanent_plot_a,"land_system",dbf1,"LANDSYS");
 			addCode(permanent_plot_a,"altitude",dbf1,"ALT");
@@ -384,16 +385,16 @@ public class ImportDbfTest {
 					{
 						Entity plota_enum = permanent_plot_a.addEntity("plota_enum");
 						addText(plota_enum, "name_of_species", dbf2, "LOKAL");
-						addDouble(plota_enum, "dbb_or_b", dbf2, "DBHP", true);
+						addDouble(plota_enum, "dbb_or_b", dbf2, "DBHP", true, 0);
 						addInt(plota_enum, "damage", dbf2, "DAMAGEP", false);
 						addInt(plota_enum, "azimuth_to_tree", dbf2, "AZIM", true);
-						addDouble(plota_enum, "horizontal_distance_to_tree", dbf2, "DISTP", true);
+						addDouble(plota_enum, "horizontal_distance_to_tree", dbf2, "DISTP", true, 0);
 						
 						Entity trees_higher_than_20cm = plota_enum.addEntity("trees_higher_than_20cm"); 
-						addDouble(trees_higher_than_20cm,"butress_height", dbf2, "BUTHTP", true); //TODO : adding blank value?
-						addDouble(trees_higher_than_20cm, "d_2point2m_ab", dbf2, "D22", true);
-						addDouble(trees_higher_than_20cm,"bole_height",dbf2, "BOLHTP", true); // it should be code
-						addDouble(trees_higher_than_20cm, "tree_height", dbf2, "TRHT", true);
+						addDouble(trees_higher_than_20cm,"butress_height", dbf2, "BUTHTP", true, 0); //TODO : adding blank value?
+						addDouble(trees_higher_than_20cm, "d_2point2m_ab", dbf2, "D22", true, 0);
+						addDouble(trees_higher_than_20cm,"bole_height",dbf2, "BOLHTP", true, 0); // it should be code
+						addDouble(trees_higher_than_20cm, "tree_height", dbf2, "TRHT", true, 0);
 						addInt(trees_higher_than_20cm, "grade", dbf2, "GRADEP", true);
 						addInt(trees_higher_than_20cm, "infestation", dbf2, "INFESTP", true);
 						addInt(trees_higher_than_20cm, "tree_class", dbf2, "TRCL", true);
@@ -402,26 +403,26 @@ public class ImportDbfTest {
 						
 						
 						Entity bole_and_tree_height = plota_enum.addEntity("bole_and_tree_height");
-						addDouble(bole_and_tree_height,"horizontal_distance", dbf2, "DIST1", true);
-						addDouble(bole_and_tree_height,"height_of_base", dbf2, "BASE1", true);
-						addDouble(bole_and_tree_height, "percent_base", dbf2, "PERBASE1", true);
-						addDouble(bole_and_tree_height, "percent_crown_point", dbf2, "PERCP", true);
-						addDouble(bole_and_tree_height, "percent_top_of_tree", dbf2, "PERTOP", true);
+						addDouble(bole_and_tree_height,"horizontal_distance", dbf2, "DIST1", true, 0);
+						addDouble(bole_and_tree_height,"height_of_base", dbf2, "BASE1", true, 1.3);
+						addDouble(bole_and_tree_height, "percent_base", dbf2, "PERBASE1", true, 0);
+						addDouble(bole_and_tree_height, "percent_crown_point", dbf2, "PERCP", true, 0);
+						addDouble(bole_and_tree_height, "percent_top_of_tree", dbf2, "PERTOP", true, 0);
 						
 						Entity buttress_and_diameter_above_buttress = plota_enum.addEntity("buttress_and_diameter_above_buttress");
-						addDouble(buttress_and_diameter_above_buttress, "horizontal_distance", dbf2, "DIST2", true);
-						addDouble(buttress_and_diameter_above_buttress, "percent_base", dbf2, "PERBASE2", true);
-						addDouble(buttress_and_diameter_above_buttress, "percent_buttress", dbf2, "PERCBUT", true);
+						addDouble(buttress_and_diameter_above_buttress, "horizontal_distance", dbf2, "DIST2", true, 0);
+						addDouble(buttress_and_diameter_above_buttress, "percent_base", dbf2, "PERBASE2", true, 0);
+						addDouble(buttress_and_diameter_above_buttress, "percent_buttress", dbf2, "PERCBUT", true, 0);
 						
 						Entity d_02_ab = buttress_and_diameter_above_buttress.addEntity("d_02_ab");
-						addDouble(d_02_ab, "full_bars", dbf2, "FB1", true);
-						addDouble(d_02_ab, "quarter_bars", dbf2, "B41", true);
+						addDouble(d_02_ab, "full_bars", dbf2, "FB1", true, 0);
+						addDouble(d_02_ab, "quarter_bars", dbf2, "B41", true, 0);
 						
-						addDouble(buttress_and_diameter_above_buttress, "percent_2point2m_ab", dbf2, "PERC22", true);
+						addDouble(buttress_and_diameter_above_buttress, "percent_2point2m_ab", dbf2, "PERC22", true, 0);
 						
 						Entity d_22_ab = buttress_and_diameter_above_buttress.addEntity("d_22_ab");
-						addDouble(d_22_ab, "full_bars", dbf2, "FB2", true);
-						addDouble(d_22_ab, "quarter_bars", dbf2, "B42", true);					
+						addDouble(d_22_ab, "full_bars", dbf2, "FB2", true, 0);
+						addDouble(d_22_ab, "quarter_bars", dbf2, "B42", true, 0);					
 					}
 				}
 			}
@@ -450,7 +451,13 @@ public class ImportDbfTest {
 				System.out.println("\t\t..Inexist file " + filePath);
 			}else
 			{
-				e.printStackTrace();
+				if(e instanceof EOFException)
+				{
+					System.out.println("\t\t..The file maybe in zero size");
+				}else{
+					e.printStackTrace();
+				}
+				
 			}
 		} 
 		return null;
@@ -498,8 +505,8 @@ public class ImportDbfTest {
 			
 			
 			//do this by the contents of the old foxpro fields
-			addDouble(nf, "sector", dbf1, "SECTOR", true);
-			addDouble(nf, "segment_dist", dbf1, "DISTANCE", true);
+			addDouble(nf, "sector", dbf1, "SECTOR", true, 0);
+			addDouble(nf, "segment_dist", dbf1, "DISTANCE", true, 0);
 			
 			addIntegerLoose(nf, "permanent", "");//permanent is always blank
 			addIntegerLoose(nf, "record_type", "");//record type is also blanked, no need to store this. Will be deleted
@@ -542,29 +549,29 @@ public class ImportDbfTest {
 					{
 						Entity tp = nf.addEntity("tp");
 						addText(tp, "species_name", dbf2, "LOKAL");
-						addDouble(tp, "diameter", dbf2, "DBH", true);
+						addDouble(tp, "diameter", dbf2, "DBH", true, 0);
 						addInt(tp, "damage", dbf2, "DAMAGE", false);
 						
 						Entity lg_trees = tp.addEntity("lg_trees");
 						//di IDM ada tree_height, tapi disiniga ada. 
-						addDouble(lg_trees,"buttress_height", dbf2, "BUTHGT", true); //TODO : adding blank value?
-						addDouble(lg_trees, "bole_height", dbf2, "BOLHGT", true);
+						addDouble(lg_trees,"buttress_height", dbf2, "BUTHGT", true, 0); //TODO : adding blank value?
+						addDouble(lg_trees, "bole_height", dbf2, "BOLHGT", true, 0);
 						addInt(lg_trees,"grade",dbf2, "GRADE", true); // it should be code
 						addInt(lg_trees, "infestation", dbf2, "INFEST", true);
 						
 						Entity bole_height = tp.addEntity("bole_height");
-						addDouble(bole_height,"horizontal_distance", dbf2, "DIST1", true);
-						addDouble(bole_height,"base_height", dbf2, "BASE1", true);
-						addDouble(bole_height, "percent_base", dbf2, "PERBASE1", true);
-						addDouble(bole_height, "percent_crown_point", dbf2, "PERCP", true);
+						addDouble(bole_height,"horizontal_distance", dbf2, "DIST1", true, 0);
+						addDouble(bole_height,"base_height", dbf2, "BASE1", true, 1.3);
+						addDouble(bole_height, "percent_base", dbf2, "PERBASE1", true, 0);
+						addDouble(bole_height, "percent_crown_point", dbf2, "PERCP", true, 0);
 						
 						Entity buttress = tp.addEntity("buttress");
-						addDouble(buttress, "horizontal_distance", dbf2, "DIST2", true);
-						addDouble(buttress, "percent_base", dbf2, "PERBASE2", true);
-						addDouble(buttress, "percent_buttress", dbf2, "PERCBUT", true);
+						addDouble(buttress, "horizontal_distance", dbf2, "DIST2", true, 0);
+						addDouble(buttress, "percent_base", dbf2, "PERBASE2", true, 0);
+						addDouble(buttress, "percent_buttress", dbf2, "PERCBUT", true, 0);
 						Entity dab = tp.addEntity("dab");
-						addDouble(dab, "full_bars", dbf2, "FB1", true);
-						addDouble(dab, "quarter_bars", dbf2, "B41", true);
+						addDouble(dab, "full_bars", dbf2, "FB1", true, 0);
+						addDouble(dab, "quarter_bars", dbf2, "B41", true, 0);
 					}
 				}
 			}
@@ -588,10 +595,10 @@ public class ImportDbfTest {
 						
 						Entity lg_rattan = ssr.addEntity("lg_rattan");
 						addInt(lg_rattan, "stems", dbf3, "RAT2NO", true);
-						addDouble(lg_rattan, "max_diameter", dbf3, "RAT2DMX", true);
-						addDouble(lg_rattan, "min_diameter", dbf3, "RAT2DMN", true);
-						addDouble(lg_rattan, "avg_diameter", dbf3, "RAT2DAV", true);
-						addDouble(lg_rattan, "avg_length", dbf3, "RAT2L", true);					
+						addDouble(lg_rattan, "max_diameter", dbf3, "RAT2DMX", true, 0);
+						addDouble(lg_rattan, "min_diameter", dbf3, "RAT2DMN", true, 0);
+						addDouble(lg_rattan, "avg_diameter", dbf3, "RAT2DAV", true, 0);
+						addDouble(lg_rattan, "avg_length", dbf3, "RAT2L", true, 0);					
 					}
 				}
 			}
@@ -688,7 +695,7 @@ public class ImportDbfTest {
 		return result; 
 	}
 	
-	private void addDouble(Entity entity, String collectField, DBF dbfFile, String dbField, boolean useStarWhenEmpty)  {
+	private void addDouble(Entity entity, String collectField, DBF dbfFile, String dbField, boolean useStarWhenEmpty, double valueWhenMissing)  {
 		String strValue=null;
 		try {
 			strValue = ((NumField) dbfFile.getField(dbField)).get().trim();
@@ -729,7 +736,7 @@ public class ImportDbfTest {
 				attr = entity.addValue(collectField, (Double) null);
 				attr.getField(0).setSymbol(FieldSymbol.BLANK_ON_FORM.getCode());
 			}else{
-				attr = entity.addValue(collectField, safeDouble("0"));
+				attr = entity.addValue(collectField, valueWhenMissing);
 			}
 		} 
 		else
@@ -846,7 +853,7 @@ public class ImportDbfTest {
 				attr = entity.addValue(collectField, (Integer) null);
 				attr.getField(0).setSymbol(FieldSymbol.BLANK_ON_FORM.getCode());
 			}else{
-				attr = entity.addValue(collectField, safeInt("0"));
+				attr = entity.addValue(collectField, 0);
 			}
 		} 
 		else
