@@ -404,7 +404,7 @@ public class ImportDbfTest {
 						
 						Entity bole_and_tree_height = plota_enum.addEntity("bole_and_tree_height");
 						addDouble(bole_and_tree_height,"horizontal_distance", dbf2, "DIST1", true, 0);
-						addDouble(bole_and_tree_height,"height_of_base", dbf2, "BASE1", true, 1.3);
+						addDouble(bole_and_tree_height,"height_of_base", dbf2, "BASE1", false, 1.3);
 						addDouble(bole_and_tree_height, "percent_base", dbf2, "PERBASE1", true, 0);
 						addDouble(bole_and_tree_height, "percent_crown_point", dbf2, "PERCP", true, 0);
 						addDouble(bole_and_tree_height, "percent_top_of_tree", dbf2, "PERTOP", true, 0);
@@ -561,7 +561,7 @@ public class ImportDbfTest {
 						
 						Entity bole_height = tp.addEntity("bole_height");
 						addDouble(bole_height,"horizontal_distance", dbf2, "DIST1", true, 0);
-						addDouble(bole_height,"base_height", dbf2, "BASE1", true, 1.3);
+						addDouble(bole_height,"base_height", dbf2, "BASE1", false, 1.3);
 						addDouble(bole_height, "percent_base", dbf2, "PERBASE1", true, 0);
 						addDouble(bole_height, "percent_crown_point", dbf2, "PERCP", true, 0);
 						
